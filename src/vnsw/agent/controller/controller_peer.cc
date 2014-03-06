@@ -1033,6 +1033,10 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             } 
         }
 
+        //Start a timer to flush off all old configs
+        Agent::GetInstance()->GetIfMapAgentStaleCleaner()->
+            StaleCleanup(AgentIfMapXmppChannel::GetSeqNumber());
+
         // Switch-over Multicast Tree Builder
         AgentXmppChannel *agent_mcast_builder = 
             agent->GetControlNodeMulticastBuilder();
@@ -1051,7 +1055,6 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
                 // Reset Multicast Tree Builder
                 agent->SetControlNodeMulticastBuilder(peer);
                 MulticastHandler::HandlePeerDown();
-            }
         } else {
             //same peer
             return;
@@ -1098,6 +1101,8 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
         }
 
         // Switch-over Multicast Tree Builder
+        AgentXmppChannel *agent_mcast_builder = 
+            Agent::GetInstance()->GetControlNodeMulticastBuilder();
         if (agent_mcast_builder == peer) {
             uint8_t o_idx = ((agent_mcast_builder->GetXmppServerIdx() == 0) 
                              ? 1: 0);

@@ -197,7 +197,11 @@ public:
     MulticastGroupObject *FindFloodGroupObject(const std::string &vrf_name);
     MulticastGroupObject *FindGroupObject(const std::string &vrf_name,
                                           const Ip4Address &dip);
+<<<<<<< HEAD
     bool FlushPeerInfo(uint64_t peer_sequence);
+=======
+    bool TimerExpired(uint64_t peer_sequence);
+>>>>>>> Initial commit for creating and deleting stale multicast entries
     Timer *stale_timer() const {return stale_timer_;}
 private:
     //operations on list of all objectas per group/source/vrf

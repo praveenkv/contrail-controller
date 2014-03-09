@@ -111,6 +111,15 @@ bool AgentRouteTable::StalePeerRoutes(DBTablePartBase *part,
     return true;
 }
 
+bool AgentRouteTable::StalePeerRoutes(DBTablePartBase *part, 
+                                      DBEntryBase *entry, Peer *peer) {
+    AgentRoute *route = static_cast<AgentRoute *>(entry);
+    if (route) {
+        StalePathFromPeer(part, route, peer);
+    }
+    return true;
+}
+
 // Delete all paths from BGP Peer. Delete route if no path left
 bool AgentRouteTable::DeleteAllBgpPath(DBTablePartBase *part,
                                        DBEntryBase *entry) {

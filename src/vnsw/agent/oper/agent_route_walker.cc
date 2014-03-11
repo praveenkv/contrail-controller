@@ -79,7 +79,6 @@ void AgentRouteWalker::StartVrfWalk()
         AGENT_LOG(AgentRouteWalkerLog, vrf_walkid_, walk_type_,
                   "VRF table walk started ", "", 0);
     }
-    walk_count_++;
 }
 
 /*

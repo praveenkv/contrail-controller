@@ -148,6 +148,9 @@ if sys.platform != 'darwin':
     test_scale_walk = env.Program(target = 'test_scale_walk', source = ['test_scale_walk.cc'])
     env.Alias('controller/agent:test_scale_walk', test_scale_walk)
 
+    test_basic_scale = env.Program(target = 'test_basic_scale', source = ['test_basic_scale.cc'])
+    env.Alias('src/vnsw/agent/test:test_basic_scale', test_basic_scale)
+
 #    test_sg = env.Program(target = 'test_sg', source = ['test_sg.cc'])
 #    env.Alias('controller/agent:test_sg', test_sg)
 

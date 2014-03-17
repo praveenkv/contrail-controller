@@ -156,8 +156,6 @@ private:
     void Input(DBTablePartition *part, DBClient *client, DBRequest *req);
     void StalePathFromPeer(DBTablePartBase *part, AgentRoute *rt,
                             const Peer *peer);
-    void StalePathFromPeer(DBTablePartBase *part, AgentRoute *rt,
-                            const Peer *peer);
 
     Agent *agent_;
     UnresolvedRouteTree unresolved_rt_tree_;

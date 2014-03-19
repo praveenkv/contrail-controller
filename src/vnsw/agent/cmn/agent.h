@@ -554,6 +554,8 @@ public:
     OperDB *oper_db() const {return oper_db_.get(); }
     VNController *controller() const {return controller_.get();}
 
+    std::list<Peer *>ControllerPeerList;
+
 private:
     void GetConfig();
 

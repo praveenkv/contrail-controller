@@ -151,6 +151,9 @@ if sys.platform != 'darwin':
     test_multicast_headless = env.Program(target = 'test_multicast_headless', source = ['test_multicast_headless.cc'])
     env.Alias('src/vnsw/agent/test:test_multicast_headless', test_multicast_headless)
 
+    test_xmpp_hv = env.Program(target = 'test_xmpp_hv', source = ['test_xmpp_hv.cc'])
+    env.Alias('controller/agent:test_xmpp_hv', test_xmpp_hv)
+
 #    test_sg = env.Program(target = 'test_sg', source = ['test_sg.cc'])
 #    env.Alias('controller/agent:test_sg', test_sg)
 

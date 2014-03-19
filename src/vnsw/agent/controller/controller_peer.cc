@@ -1078,6 +1078,9 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             MulticastHandler::HandlePeerDown();
         }
 
+        // Add BgpPeer to global decommissioned list
+        peer->DeCommissionBgpPeer();
+
         //Enqueue cleanup of unicast routes
         peer->bgp_peer_id()->DelPeerRoutes(
             boost::bind(&AgentXmppChannel::BgpPeerDelDone, peer));
@@ -1595,8 +1598,4 @@ bool AgentXmppChannel::ControllerSendMcastRoute(AgentXmppChannel *peer,
     datalen_ = XmppProto::EncodeMessage(impl.get(), data_, sizeof(data_));
     // send data
     return (peer->SendUpdate(data_,datalen_));
-}
-
-uint64_t AgentXmppChannel::GetGlobalMulticastIdentifier() {
-    return multicast_peer_identifier;
 }

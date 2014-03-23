@@ -13,6 +13,7 @@
 #include "controller/controller_ifmap.h"
 #include "controller/controller_vrf_export.h"
 #include "controller/controller_init.h"
+#include "controller/controller_global.h"
 #include "oper/vrf.h"
 #include "oper/nexthop.h"
 #include "oper/mirror_table.h"
@@ -1033,9 +1034,11 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             } 
         }
 
-        //Start a timer to flush off all old configs
-        Agent::GetInstance()->GetIfMapAgentStaleCleaner()->
-            StaleCleanup(AgentIfMapXmppChannel::GetSeqNumber());
+        if (headless) {
+            //Start a timer to flush off all old configs
+            Agent::GetInstance()->GetIfMapAgentStaleCleaner()->
+                StaleCleanup(AgentIfMapXmppChannel::GetSeqNumber());
+        }
 
         // Switch-over Multicast Tree Builder
         AgentXmppChannel *agent_mcast_builder = 
@@ -1078,8 +1081,18 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             MulticastHandler::HandlePeerDown();
         }
 
-        // Add BgpPeer to global decommissioned list
-        peer->DeCommissionBgpPeer();
+        AgentXmppChannel *agent_mcast_builder = 
+            Agent::GetInstance()->GetControlNodeMulticastBuilder();
+        if (headless) {
+            // Add BgpPeer to global decommissioned list
+            peer->DeCommissionBgpPeer();
+        } else {
+            //Enqueue cleanup of multicast routes
+            if (agent_mcast_builder == peer) {
+                // Cleanup sub-nh list and mpls learnt from peer
+                MulticastHandler::HandlePeerDown();
+            }
+        }
 
         //Enqueue cleanup of unicast routes
         peer->bgp_peer_id()->DelPeerRoutes(
@@ -1104,8 +1117,6 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
         }
 
         // Switch-over Multicast Tree Builder
-        AgentXmppChannel *agent_mcast_builder = 
-            Agent::GetInstance()->GetControlNodeMulticastBuilder();
         if (agent_mcast_builder == peer) {
             uint8_t o_idx = ((agent_mcast_builder->GetXmppServerIdx() == 0) 
                              ? 1: 0);

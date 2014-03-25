@@ -13,7 +13,6 @@
 #include "controller/controller_ifmap.h"
 #include "controller/controller_vrf_export.h"
 #include "controller/controller_init.h"
-#include "controller/controller_global.h"
 #include "oper/vrf.h"
 #include "oper/nexthop.h"
 #include "oper/mirror_table.h"
@@ -1036,7 +1035,7 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
 
         if (headless) {
             //Start a timer to flush off all old configs
-            Agent::GetInstance()->GetIfMapAgentStaleCleaner()->
+            agent->GetIfMapAgentStaleCleaner()->
                 StaleCleanup(AgentIfMapXmppChannel::GetSeqNumber());
         }
 
@@ -1082,7 +1081,7 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
         }
 
         AgentXmppChannel *agent_mcast_builder = 
-            Agent::GetInstance()->GetControlNodeMulticastBuilder();
+            agent->GetControlNodeMulticastBuilder();
         if (headless) {
             // Add BgpPeer to global decommissioned list
             peer->DeCommissionBgpPeer();

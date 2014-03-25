@@ -47,26 +47,6 @@ TEST_F(AgentBasicScaleTest, multicast_one_channel_down_up) {
     //expect subscribe message+route at the mock server
     Ip4Address mc_addr = Ip4Address::from_string("255.255.255.255");
     WAIT_FOR(1000, 10000, MCRouteFind("vrf1", mc_addr));
-
-    VerifyVmPortActive(true);
-    VerifyRoutes(false);
-    mc_addr = Ip4Address::from_string("1.1.1.255");
-    EXPECT_TRUE(RouteFind("vrf1", mc_addr, 32));
-    
-    //Store the src mpls label to verify it does not change after channel down
-    MulticastGroupObject *mcobj = MulticastHandler::GetInstance()->
-        FindGroupObject("vrf1", mc_addr);
-    EXPECT_TRUE(mcobj != NULL);
-
-    uint32_t old_multicast_identifier = 
-        Agent::GetInstance()->controller()->multicast_peer_identifier();
-    WAIT_FOR(1000, 10000, (mcobj->GetSourceMPLSLabel() != 0));
-    uint32_t subnet_src_label = mcobj->GetSourceMPLSLabel();
-    //EXPECT_TRUE(Agent::GetInstance()->GetMplsTable()->FindMplsLabel(subnet_src_label));
-
-    //Bring down the channel
-    AgentXmppChannel *ch = static_cast<AgentXmppChannel *>(bgp_peer[0].get());
-    bgp_peer[0].get()->HandleXmppChannelEvent(xmps::NOT_READY);
     client->WaitForIdle();
     mc_addr = Ip4Address::from_string("1.1.1.255");
     EXPECT_TRUE(RouteFind("vrf1", mc_addr, 32));

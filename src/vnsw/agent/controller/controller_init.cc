@@ -21,7 +21,6 @@
 #include "bind/bind_resolver.h"
 
 using namespace boost::asio;
-AgentControllerGlobalData *VNController::global_controller_data_;
 
 SandeshTraceBufferPtr ControllerTraceBuf(SandeshTraceBufferCreate(
     "Controller", 1000));
@@ -500,6 +499,6 @@ void VNController::CreateGlobalControllerData() {
     }
 }
 
-AgentControllerGlobalData *VNController::global_controller_data() {
-    return (global_controller_data_ ? global_controller_data_ : NULL);
+void VNController::AddToControllerPeerList(Peer *peer) {
+    controller_peer_list_.push_back(peer);
 }

@@ -502,3 +502,39 @@ void VNController::CreateGlobalControllerData() {
 void VNController::AddToControllerPeerList(Peer *peer) {
     controller_peer_list_.push_back(peer);
 }
+
+void VNController::ControllerPeerHeadlessAgentDelDone(Peer *bgp_peer) {
+    for (std::list<boost::shared_ptr<Peer> >::iterator it  = 
+         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
+         ++it) {
+        Peer *peer = static_cast<Peer *>((*it).get());
+        if (peer == bgp_peer) {
+            controller_peer_list_.remove(*it);
+            return;
+        }
+    }
+}
+
+bool VNController::ControllerPeerCleanupTimerExpired() {
+    for (std::list<boost::shared_ptr<Peer> >::iterator it  = 
+         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
+         ++it) {
+        BgpPeer *bgp_peer = static_cast<BgpPeer *>((*it).get());
+        bgp_peer->DelPeerRoutes(
+            boost::bind(&VNController::ControllerPeerHeadlessAgentDelDone, this, bgp_peer));
+    }
+
+    return true;
+}
+
+void VNController::ControllerPeerStartCleanupTimer() {
+    if (cleanup_timer_ == NULL) {
+        return;
+    }
+
+    if (cleanup_timer_->running()) {
+        cleanup_timer_->Cancel();
+    }
+    cleanup_timer_->Start(kUnicastStaleTimer,
+        boost::bind(&VNController::ControllerPeerCleanupTimerExpired, this));
+}

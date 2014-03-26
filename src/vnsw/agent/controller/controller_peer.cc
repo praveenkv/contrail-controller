@@ -1033,12 +1033,6 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             } 
         }
 
-        if (headless) {
-            //Start a timer to flush off all old configs
-            agent->GetIfMapAgentStaleCleaner()->
-                StaleCleanup(AgentIfMapXmppChannel::GetSeqNumber());
-        }
-
         // Switch-over Multicast Tree Builder
         AgentXmppChannel *agent_mcast_builder = 
             agent->GetControlNodeMulticastBuilder();
@@ -1087,10 +1081,9 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
             peer->DeCommissionBgpPeer();
         } else {
             //Enqueue cleanup of multicast routes
-            if (agent_mcast_builder == peer) {
-                // Cleanup sub-nh list and mpls learnt from peer
-                MulticastHandler::HandlePeerDown();
-            }
+        if (agent_mcast_builder == peer) {
+            // Cleanup sub-nh list and mpls learnt from peer
+            MulticastHandler::HandlePeerDown();
         }
 
         //Enqueue cleanup of unicast routes

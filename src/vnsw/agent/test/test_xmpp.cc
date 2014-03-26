@@ -853,6 +853,8 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
 }
 
 TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
+    if (!Agent::GetInstance()->headless_agent_mode())
+        return;
 
     client->Reset();
     client->WaitForIdle();

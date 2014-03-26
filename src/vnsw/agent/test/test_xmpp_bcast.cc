@@ -713,6 +713,10 @@ protected:
         client->MplsReset();
     }
 
+    void XmppSubnetTearDown() {
+        XmppSubnetTearDown(6);
+    }
+
     EventManager evm_;
     ServerThread thread_;
 

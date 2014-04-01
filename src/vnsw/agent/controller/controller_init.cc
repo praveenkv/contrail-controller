@@ -528,6 +528,17 @@ bool VNController::ControllerPeerCleanupTimerExpired() {
 }
 
 void VNController::ControllerPeerStartCleanupTimer() {
+    uint32_t cleanup_timer = kUnicastStaleTimer;
+
+    ControllerPeerCancelCleanupTimer();
+    if (!(agent_->headless_agent_mode())) {
+        cleanup_timer = 0;
+    }
+    cleanup_timer_->Start(cleanup_timer,
+        boost::bind(&VNController::ControllerPeerCleanupTimerExpired, this));
+}
+
+void VNController::ControllerPeerCancelCleanupTimer() {
     if (cleanup_timer_ == NULL) {
         return;
     }
@@ -535,6 +546,4 @@ void VNController::ControllerPeerStartCleanupTimer() {
     if (cleanup_timer_->running()) {
         cleanup_timer_->Cancel();
     }
-    cleanup_timer_->Start(kUnicastStaleTimer,
-        boost::bind(&VNController::ControllerPeerCleanupTimerExpired, this));
 }

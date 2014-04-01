@@ -56,6 +56,8 @@ void AgentXmppChannel::CreateBgpPeer() {
     if (bgp_peer_id_.get())
         return;
 
+    SetState(AgentXmppChannel::UP);
+
     //Ensure older bgp_peer_id in decommisioned list
     DBTableBase::ListenerId id = 
         agent_->GetVrfTable()->Register(boost::bind(&VrfExport::Notify,

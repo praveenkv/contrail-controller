@@ -853,8 +853,6 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
 }
 
 TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
-    if (!Agent::GetInstance()->headless_agent_mode())
-        return;
 
     client->Reset();
     client->WaitForIdle();
@@ -871,22 +869,37 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
     bgp_peer.get()->HandleXmppChannelEvent(xmps::NOT_READY);
     client->WaitForIdle();
 
-    ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+    if (Agent::GetInstance()->headless_agent_mode()) {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
                 == 1);
+    } else {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+                == 0);
+    }
 
     //bring up the channel
     bgp_peer.get()->HandleXmppChannelEvent(xmps::READY);
     client->WaitForIdle();
 
-    ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+    if (Agent::GetInstance()->headless_agent_mode()) {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
                 == 1);
+    } else {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+                == 0);
+    }
 
     //bring-down the channel
     bgp_peer.get()->HandleXmppChannelEvent(xmps::NOT_READY);
     client->WaitForIdle();
 
-    ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+    if (Agent::GetInstance()->headless_agent_mode()) {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
                 == 2);
+    } else {
+        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+                == 0);
+    }
 
     xc->ConfigUpdate(new XmppConfigData());
     client->WaitForIdle(5);

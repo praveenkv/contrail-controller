@@ -760,10 +760,8 @@ void AgentXmppChannel::UnicastPeerDown(AgentXmppChannel *peer,
 void AgentXmppChannel::MulticastPeerDown(AgentXmppChannel *peer, 
                                          bool all_peer_gone) {
     if (all_peer_gone) {
-        peer->agent()->SetControlNodeMulticastBuilder(NULL);
         if (peer->agent()->headless_agent_mode()) {
             MulticastHandler::CancelStaleBgpPeerTimer();
-            peer->agent()->GetIfMapAgentStaleCleaner()->CancelCleanup();
             return;
         }
     }
@@ -814,7 +812,7 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
                multicast_builder_changed = true;
            }
        } else {
-           //same peer
+           //seen peer so no need to publish
            return;
        }
 
@@ -851,9 +849,16 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
                 agent->SetXmppCfgServer(new_cfg_peer->GetXmppServer(),
                                          new_cfg_peer->GetXmppServerIdx());
                 AgentIfMapVmExport::NotifyAll(new_cfg_peer);
+            } else {
+                //All cfg peers are gone, in headless agent cancel cleanup timer
+                if (agent->headless_agent_mode())
+                    peer->agent()->GetIfMapAgentStaleCleaner()->CancelCleanup();
             }  
-            if (!agent->headless_agent_mode())
+
+            //Start a timer to flush off all old configs, in non headless mode
+            if (!agent->headless_agent_mode()) {
                 AgentXmppChannel::CleanStale(peer, true, false, false);
+            }
         }
 
         // Switch-over Multicast Tree Builder
@@ -869,8 +874,6 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
                 GetPeerState() == xmps::READY) {
                 agent->SetControlNodeMulticastBuilder(new_mcast_builder);
                 AgentXmppChannel::MulticastPeerDown(peer, false);
-                //if (agent->headless_agent_mode())
-                //    AgentXmppChannel::CleanStale(peer, false, false, true);
 
                 //Advertise subnet and all broadcast routes to
                 //the new multicast tree builder
@@ -1136,14 +1139,13 @@ void AgentXmppChannel::HandleXmppClientChannelEvent(AgentXmppChannel *peer,
 
             } else {
                 agent->SetControlNodeMulticastBuilder(NULL);
+                AgentXmppChannel::MulticastPeerDown(peer, true);
                 CONTROLLER_TRACE(Session, peer->GetXmppServer(), "NOT_READY", 
                                  "NULL", "No elected Multicast Tree Builder"); 
             }
-
         } 
     }
 }
-#endif
 
 bool AgentXmppChannel::ControllerSendVmCfgSubscribe(AgentXmppChannel *peer, 
                          const boost::uuids::uuid &vm_id, 

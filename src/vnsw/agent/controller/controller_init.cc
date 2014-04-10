@@ -20,6 +20,7 @@
 #include "controller/controller_peer.h"
 #include "controller/controller_ifmap.h"
 #include "controller/controller_dns.h"
+#include "controller/controller_export.h"
 #include "bind/bind_resolver.h"
 
 using namespace boost::asio;

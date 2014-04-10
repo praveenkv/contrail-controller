@@ -206,53 +206,53 @@ class ZookeeperClient(object):
     # end master_election
 
     def create_node(self, path, value=None):
-        try:
-            if value is None:
-                value = uuid.uuid4()
-            self._zk_client.create(path, str(value), makepath=True)
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.create_node(path, value)
-        except kazoo.exceptions.NodeExistsError:
-            current_value = self.read_node(path)
-            if current_value == value:
-                return True;
-            raise ResourceExistsError(path, str(current_value))
+        while True:
+            try:
+                if value is None:
+                    value = uuid.uuid4()
+                return self._zk_client.create(path, str(value), makepath=True)
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
+            except kazoo.exceptions.NodeExistsError:
+                current_value = self.read_node(path)
+                if current_value == value:
+                    return True;
+                raise ResourceExistsError(path, str(current_value))
     # end create_node
 
     def delete_node(self, path, recursive=False):
-        try:
-            self._zk_client.delete(path, recursive=recursive)
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            self.delete_node(path, recursive=recursive)
-        except kazoo.exceptions.NoNodeError:
-            pass
+        while True:
+            try:
+                return self._zk_client.delete(path, recursive=recursive)
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
+            except kazoo.exceptions.NoNodeError:
+                return
     # end delete_node
 
     def read_node(self, path):
-        try:
-            value = self._zk_client.get(path)
-            return value[0]
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.read_node(path)
-        except Exception:
-            return None
+        while True:
+            try:
+                value = self._zk_client.get(path)
+                return value[0]
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
+            except Exception:
+                return None
     # end read_node
 
     def get_children(self, path):
-        try:
-            return self._zk_client.get_children(path)
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.get_children(path)
-        except Exception:
-            return []
+        while True:
+            try:
+                return self._zk_client.get_children(path)
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
+            except Exception:
+                return []
     # end read_node
 
 # end class ZookeeperClient

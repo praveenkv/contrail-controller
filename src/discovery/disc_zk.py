@@ -67,37 +67,36 @@ class DiscoveryZkClient(ZookeeperClient):
 
     def create_node(self, path, value='', makepath=True, sequence=False):
         value = str(value)
-        try:
-            self._zk.set(path, value)
-        except kazoo.exceptions.NoNodeException:
-            self.syslog('create %s' % (path))
-            return self._zk.create(path, value, makepath=makepath, sequence=sequence)
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.create_node(path, value, makepath, sequence)
+        while True:
+            try:
+                return self._zk.set(path, value)
+            except kazoo.exceptions.NoNodeException:
+                self.syslog('create %s' % (path))
+                return self._zk.create(path, value, makepath=makepath, sequence=sequence)
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
     # end create_node
 
     def read_node(self, path):
-        try:
-            data, stat = self._zk.get(path)
-            return data,stat
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.read_node(path)
-        except kazoo.exceptions.NoNodeException:
-            self.syslog('exc read: node %s does not exist' % path)
-            return (None, None)
-    # end read_node
+        while True:
+            try:
+                data, stat = self._zk.get(path)
+                return data, stat
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
+            except kazoo.exceptions.NoNodeException:
+                self.syslog('exc read: node %s does not exist' % path)
+                return (None, None)
 
     def exists_node(self, path):
-        try:
-            return self._zk.exists(path)
-        except (kazoo.exceptions.SessionExpiredError,
-                kazoo.exceptions.ConnectionLoss):
-            self.reconnect()
-            return self.exists_node(path)
+        while True:
+            try:
+                return self._zk.exists(path)
+            except (kazoo.exceptions.SessionExpiredError,
+                    kazoo.exceptions.ConnectionLoss):
+                self.reconnect()
     # end exists_node
 
     def service_entries(self):

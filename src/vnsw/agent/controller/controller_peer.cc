@@ -1288,6 +1288,8 @@ bool AgentXmppChannel::ControllerSendSubscribe(AgentXmppChannel *peer,
         return false;
     }      
        
+    CONTROLLER_TRACE(Trace, peer->GetBgpPeerName(), vrf->GetName(), 
+                     "Unsubscribe");
     //Build the DOM tree
     auto_ptr<XmlBase> impl(XmppStanza::AllocXmppXmlImpl());
     XmlPugi *pugi = reinterpret_cast<XmlPugi *>(impl.get());
@@ -1658,3 +1660,4 @@ bool AgentXmppChannel::ControllerSendMcastRoute(AgentXmppChannel *peer,
     // send data
     return (peer->SendUpdate(data_,datalen_));
 }
+

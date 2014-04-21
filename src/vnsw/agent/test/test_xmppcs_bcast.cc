@@ -161,7 +161,7 @@ protected:
         xc_s->Shutdown();
         client->WaitForIdle();
 
-        Agent::GetInstance()->controller()->unicast_cleanup_timer()->Fire();
+        Agent::GetInstance()->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
         client->WaitForIdle();
         Agent::GetInstance()->controller()->Cleanup();
         client->WaitForIdle();

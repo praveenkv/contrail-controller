@@ -608,13 +608,12 @@ private:
 };
 
 IFMapAgentStaleCleaner::~IFMapAgentStaleCleaner() {
-    TimerManager::DeleteTimer(timer_);
+    //TimerManager::DeleteTimer(timer_);
 }
 
 IFMapAgentStaleCleaner::IFMapAgentStaleCleaner(DB *db, DBGraph *graph, 
         boost::asio::io_service &io_service) : 
-        db_(db), graph_(graph), timer_(TimerManager::CreateTimer(io_service,
-                                                     "Agent Stale cleanup timer")) {
+        db_(db), graph_(graph) {
 
 }
 
@@ -623,29 +622,6 @@ bool IFMapAgentStaleCleaner::StaleTimeout() {
     TaskScheduler *sch = TaskScheduler::GetInstance();
     sch->Enqueue(cleaner);
     return false;
-}
-
-// Remove stale config entries.
-// Entries are considered stale when sequence number
-// is not same as global seq number
-void IFMapAgentStaleCleaner::StaleCleanup(uint64_t seq) {
-    //If already running, cancel and start again
-    if (timer_->running()) {
-        if (timer_->Cancel() == false) {
-            IFMAP_AGENT_TRACE(Trace, seq_,
-                              "Cancel Timer failed, timer was fired");
-        }
-    }
-
-    seq_ = seq;
-    //Start to fire after the given timeout
-    timer_->Start(timeout_, boost::bind(&IFMapAgentStaleCleaner::StaleTimeout, this), NULL);
-}
-
-void IFMapAgentStaleCleaner::CancelCleanup() {
-    if (timer_->running()) {
-        timer_->Cancel();
-    }
 }
 
 void IFMapAgentStaleCleaner::Clear() {

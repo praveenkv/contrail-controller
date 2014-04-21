@@ -42,11 +42,12 @@ public:
     static bool SetConfigPeer(AgentXmppChannel *peer);
     static void SetMulticastPeer(AgentXmppChannel *old_peer, 
                                  AgentXmppChannel *new_peer);
-    static void CleanStale(AgentXmppChannel *peer, bool config, bool unicast, 
-                           bool multicast);
-    static void UnicastPeerDown(AgentXmppChannel *peer, BgpPeer *peer_id, 
-                                bool all_peer_gone);
-    static void MulticastPeerDown(AgentXmppChannel *peer, bool all_peer_gone);
+    static void CleanConfigStale(AgentXmppChannel *agent_xmpp_channel);
+    static void CleanUnicastStale(AgentXmppChannel *agent_xmpp_channel);
+    static void CleanMulticastStale(AgentXmppChannel *agent_xmpp_channel);
+    static void UnicastPeerDown(AgentXmppChannel *peer, BgpPeer *peer_id);
+    static void MulticastPeerDown(AgentXmppChannel *old_channel, 
+                                  AgentXmppChannel *new_channel);
     static void HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
                                                   xmps::PeerState state);
     static bool ControllerSendCfgSubscribe(AgentXmppChannel *peer);

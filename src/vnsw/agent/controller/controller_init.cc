@@ -28,20 +28,109 @@ using namespace boost::asio;
 SandeshTraceBufferPtr ControllerTraceBuf(SandeshTraceBufferCreate(
     "Controller", 1000));
 
-VNController::VNController(Agent *agent) : agent_(agent), multicast_peer_identifier_(0) {
-    controller_peer_list_.clear();
-    unicast_cleanup_timer_ = 
+CleanupTimer::CleanupTimer(Agent *agent, std::string timer_name)
+    : agent_(agent), extension_interval_(0), last_restart_time_(0),
+    agent_xmpp_channel_(NULL) {
+    cleanup_timer_ = 
         TimerManager::CreateTimer(*(agent->GetEventManager()->
-                                    io_service()),
-                                  "Agent Unicast Stale cleanup timer",
+                                    io_service()), timer_name,
                                   TaskScheduler::GetInstance()->
                                   GetTaskId("db::DBTable"), 0);
-    multicast_cleanup_timer_ = 
-        TimerManager::CreateTimer(*(agent->GetEventManager()->
-                                    io_service()),
-                                  "Agent Multicast Stale cleanup timer",
-                                  TaskScheduler::GetInstance()->
-                                  GetTaskId("db::DBTable"), 0);
+}
+
+bool CleanupTimer::Cancel() {
+    agent_xmpp_channel_ = NULL;
+    last_restart_time_ = 0;
+
+    if (cleanup_timer_ == NULL) {
+        return true;
+    }
+
+    if (cleanup_timer_->running()) {
+        return cleanup_timer_->Cancel();
+    }
+    return true;
+}
+
+void CleanupTimer::RescheduleTimer(AgentXmppChannel *agent_xmpp_channel) {
+    assert(agent_xmpp_channel);
+    if (agent_xmpp_channel_ == agent_xmpp_channel)
+        return;
+
+    if (cleanup_timer_->running()) { 
+        extension_interval_ = GetTimerExtensionValue(agent_xmpp_channel);
+    }
+}
+
+void CleanupTimer::Start(AgentXmppChannel *agent_xmpp_channel) {
+    if (cleanup_timer_->running()) {
+        // Null Agent XMPP channel signifies no reschedule required
+        if (agent_xmpp_channel == NULL) {
+            if (cleanup_timer_->Cancel() == false) {
+                //TODO log something
+            }
+        } else {
+            RescheduleTimer(agent_xmpp_channel);
+        }
+    } else {
+        // Start the timer fresh 
+        cleanup_timer_->Start(GetTimerInterval(),
+                              boost::bind(&CleanupTimer::TimerExpiredCallback, 
+                                          this));
+    }
+
+    last_restart_time_ = UTCTimestampUsec();
+    agent_xmpp_channel_ = agent_xmpp_channel;
+}
+
+bool CleanupTimer::TimerExpiredCallback() {
+    if (extension_interval_) {
+        // Restart the timer for postpone_interval specified.
+        cleanup_timer_->Reschedule(extension_interval_);
+        //cleanup_timer_->Start(extension_interval_,
+        //                      boost::bind(&CleanupTimer::TimerExpiredCallback,
+        //                                  this));
+        //Reset postpone_interval
+        extension_interval_ = 0;
+        return true;
+    } 
+    
+    TimerExpirationDone();
+    return true;
+}
+
+// If timer is in running state 
+uint64_t UnicastCleanupTimer::GetTimerExtensionValue(AgentXmppChannel *ch) {
+    uint64_t ch_setup_time = agent_->GetAgentXmppChannelSetupTime(ch->
+                                                     GetXmppServerIdx());
+    return (kUnicastStaleTimer - ((UTCTimestampUsec() - ch_setup_time) / 1000));
+}
+
+void UnicastCleanupTimer::TimerExpirationDone() {
+    agent_->controller()->UnicastCleanupTimerExpired();
+}
+
+uint64_t MulticastCleanupTimer::GetTimerExtensionValue(AgentXmppChannel *ch) {
+    return (kMulticastStaleTimer - ((UTCTimestampUsec() - 
+                                     last_restart_time_) / 1000));
+}
+
+void MulticastCleanupTimer::TimerExpirationDone() {
+    agent_->controller()->MulticastCleanupTimerExpired(peer_sequence_);
+}
+
+uint64_t ConfigCleanupTimer::GetTimerExtensionValue(AgentXmppChannel *ch) {
+    return (timeout_ - ((UTCTimestampUsec() - last_restart_time_) / 1000));
+}
+
+void ConfigCleanupTimer::TimerExpirationDone() {
+    agent_->GetIfMapAgentStaleCleaner()->StaleTimeout();
+}
+
+VNController::VNController(Agent *agent) : agent_(agent), multicast_peer_identifier_(0),
+    unicast_cleanup_timer_(agent), multicast_cleanup_timer_(agent), 
+    config_cleanup_timer_(agent) {
+        controller_peer_list_.clear();
 }
 
 VNController::~VNController() {
@@ -452,6 +541,19 @@ uint8_t VNController::ActiveXmppConnectionCount() {
     return active_xmpps;
 }
 
+AgentXmppChannel *VNController::GetLastActiveXmppChannel() {
+    for (uint8_t count = 0; count < MAX_XMPP_SERVERS; count++) {
+        AgentXmppChannel *xc = agent_->GetAgentXmppChannel(count);
+       if (xc) {
+           // Check if AgentXmppChannel has BGP peer
+           if (xc->bgp_peer_id() != NULL)
+               return xc;
+       }
+    }
+
+    return NULL;
+}
+
 void VNController::AddToControllerPeerList(BgpPeerPtr peer) {
     controller_peer_list_.push_back(peer);
 }
@@ -478,17 +580,6 @@ void VNController::ControllerPeerHeadlessAgentDelDone(BgpPeer *bgp_peer) {
     }
 }
 
-bool VNController::CancelTimer(Timer *timer) {
-    if (timer == NULL) {
-        return true;
-    }
-
-    if (timer->running()) {
-        return timer->Cancel();
-    }
-    return true;
-}
-
 /*
  * Callback for unicast timer expiration.
  * Iterates through all decommisioned peers and issues 
@@ -507,20 +598,14 @@ bool VNController::UnicastCleanupTimerExpired() {
     return false;
 }
 
-void VNController::StartUnicastCleanupTimer() {
-    if (CancelTimer(unicast_cleanup_timer_) == false) {
-        //TODO handle failure case.
-        CONTROLLER_TRACE(Generic, "Cancel of unicast cleanup timer failed.");
-    }
-
+void VNController::StartUnicastCleanupTimer(AgentXmppChannel *agent_xmpp_channel) {
     // In non-headless mode trigger cleanup 
     if (!(agent_->headless_agent_mode())) {
         UnicastCleanupTimerExpired();
         return;
     }
 
-    unicast_cleanup_timer_->Start(kUnicastStaleTimer,
-        boost::bind(&VNController::UnicastCleanupTimerExpired, this));
+    unicast_cleanup_timer_.Start(agent_xmpp_channel);
 }
 
 // Multicast info is maintained using sequence number and not peer,
@@ -531,24 +616,27 @@ bool VNController::MulticastCleanupTimerExpired(uint64_t peer_sequence) {
     return false;
 }
 
-void VNController::StartMulticastCleanupTimer(uint64_t peer_sequence) {
-    if (CancelTimer(multicast_cleanup_timer_) == false) {
-        //TODO handle failure case.
-        CONTROLLER_TRACE(Generic, "Cancel of multicast cleanup timer failed.");
-    }
-
+void VNController::StartMulticastCleanupTimer(AgentXmppChannel *agent_xmpp_channel) {
     // In non-headless mode trigger cleanup 
     if (!(agent_->headless_agent_mode())) {
-        MulticastCleanupTimerExpired(peer_sequence);
+        MulticastCleanupTimerExpired(multicast_peer_identifier_);
         return;
     }
 
     // Pass the current peer sequence. In the timer expiration interval 
     // if new peer sends new info sequence number wud have incremented in
     // multicast.
-    multicast_cleanup_timer_->Start(kMulticastStaleTimer,
-        boost::bind(&VNController::MulticastCleanupTimerExpired, this, 
-                    peer_sequence));
+    multicast_cleanup_timer_.peer_sequence_ = agent_->controller()->
+        multicast_peer_identifier();
+    multicast_cleanup_timer_.Start(agent_xmpp_channel);
+}
+
+void VNController::StartConfigCleanupTimer(AgentXmppChannel *agent_xmpp_channel) {
+    if (agent_->headless_agent_mode()) {
+        config_cleanup_timer_.Start(agent_xmpp_channel);
+    } else {
+        config_cleanup_timer_.Start(NULL);
+    }
 }
 
 // Helper to iterate thru all decommisioned peer and delete the vrf state for

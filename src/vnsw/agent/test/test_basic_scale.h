@@ -542,7 +542,8 @@ protected:
     }
 
     virtual void TearDown() {
-        Agent::GetInstance()->controller()->unicast_cleanup_timer()->Fire();
+        Agent::GetInstance()->controller()->
+            unicast_cleanup_timer().cleanup_timer_->Fire();
         client->WaitForIdle();
 
         for (int i = 0; i < num_ctrl_peers; i++) {
@@ -595,7 +596,9 @@ protected:
         //expect subscribe for __default__ at the mock server
 
         ControlNodeMockBgpXmppPeer *mock_peer_l = mock_peer[i].get();
+        cout << "DEBUGMS " << mock_peer_l->Count() << endl;
         WAIT_FOR(1000, 10000, (mock_peer_l->Count() == mock_peer_count));
+        cout << "DEBUGMS2 " << mock_peer_l->Count() << " " << mock_peer_count << endl;
     }
 
     void BuildControlPeers() {
@@ -699,8 +702,8 @@ protected:
         WAIT_FOR(10000, 10000, (agent_->GetInterfaceTable()->Size() == 3));
         VerifyRoutes(true);
         VerifyVmPortActive(false);
-        agent_->controller()->unicast_cleanup_timer()->Fire();
-        agent_->controller()->multicast_cleanup_timer()->Fire();
+        agent_->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
+        agent_->controller()->multicast_cleanup_timer().cleanup_timer_->Fire();
         WAIT_FOR(10000, 10000, (Agent::GetInstance()->GetVrfTable()->Size() == 1));
         WAIT_FOR(1000, 1000, (Agent::GetInstance()->GetVnTable()->Size() == 0));
     }

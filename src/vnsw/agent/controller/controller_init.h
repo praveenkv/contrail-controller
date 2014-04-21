@@ -15,12 +15,66 @@ class AgentDnsXmppChannel;
 class AgentIfMapVmExport;
 class BgpPeer;
 
+struct CleanupTimer {
+    CleanupTimer(Agent *agent, std::string timer_name);
+    virtual ~CleanupTimer() { };
+
+    void Start(AgentXmppChannel *agent_xmpp_channel);
+    bool Cancel();
+    void RescheduleTimer(AgentXmppChannel *agent_xmpp_channel);
+    bool TimerExpiredCallback();
+
+    virtual uint32_t GetTimerInterval() const {return 0;}
+    virtual void TimerExpirationDone() { };
+    virtual uint64_t GetTimerExtensionValue(AgentXmppChannel *ch) {
+        return 0;}
+
+    Agent *agent_;
+    Timer *cleanup_timer_;
+    uint64_t extension_interval_;
+    uint64_t last_restart_time_;
+    AgentXmppChannel *agent_xmpp_channel_;
+};
+
+struct UnicastCleanupTimer : public CleanupTimer {
+    static const uint32_t kUnicastStaleTimer = (2 * 60 * 1000); 
+    UnicastCleanupTimer(Agent *agent)
+        : CleanupTimer(agent, "Agent Unicast Stale cleanup timer") { };
+    virtual ~UnicastCleanupTimer() { };
+
+    virtual uint32_t GetTimerInterval() const {return kUnicastStaleTimer;};
+    virtual void TimerExpirationDone();
+    virtual uint64_t GetTimerExtensionValue(AgentXmppChannel *ch);
+};
+
+struct MulticastCleanupTimer : public CleanupTimer {
+    static const uint32_t kMulticastStaleTimer = (5 * 60 * 1000); 
+    MulticastCleanupTimer(Agent *agent) 
+        : CleanupTimer(agent, "Agent Multicast Stale cleanup timer") { };
+    virtual ~MulticastCleanupTimer() { };
+
+    virtual uint32_t GetTimerInterval() const {return kMulticastStaleTimer;};
+    virtual void TimerExpirationDone();
+    virtual uint64_t GetTimerExtensionValue(AgentXmppChannel *ch);
+
+    uint32_t peer_sequence_;
+};
+
+struct ConfigCleanupTimer : public CleanupTimer {
+    static const int timeout_ = (15 * 60 * 1000); // In milli seconds
+    ConfigCleanupTimer(Agent *agent)
+        : CleanupTimer(agent, "Agent Stale cleanup timer") { };
+    virtual ~ConfigCleanupTimer() { };
+
+    virtual uint32_t GetTimerInterval() const {return timeout_;}
+    virtual void TimerExpirationDone();
+    virtual uint64_t GetTimerExtensionValue(AgentXmppChannel *ch);
+};
+
 class VNController {
 public:
     typedef boost::shared_ptr<BgpPeer> BgpPeerPtr; 
     static const uint64_t kInvalidPeerIdentifier = 0xFFFFFFFFFFFFFFFF;
-    static const uint32_t kUnicastStaleTimer = (2 * 60 * 1000); 
-    static const uint32_t kMulticastStaleTimer = (5 * 60 * 1000); 
     VNController(Agent *agent);
     ~VNController();
     void Connect();
@@ -43,25 +97,25 @@ public:
 
     //Peer maintenace routines 
     uint8_t ActiveXmppConnectionCount();
+    AgentXmppChannel *GetLastActiveXmppChannel();
     uint32_t ControllerPeerListSize() const {return controller_peer_list_.size();}
     void AddToControllerPeerList(boost::shared_ptr<BgpPeer> peer);
 
-    //timer common
-    bool CancelTimer(Timer *timer);
-
     //Unicast timer related routines
-    void StartUnicastCleanupTimer();
+    void StartUnicastCleanupTimer(AgentXmppChannel *agent_xmpp_channel);
     bool UnicastCleanupTimerExpired();
-    Timer *unicast_cleanup_timer() const {return unicast_cleanup_timer_;}
+    CleanupTimer &unicast_cleanup_timer(){return unicast_cleanup_timer_;}
     void ControllerPeerHeadlessAgentDelDone(BgpPeer *peer);
 
     //Multicast timer
-    void StartMulticastCleanupTimer(uint64_t peer_sequence);
+    void StartMulticastCleanupTimer(AgentXmppChannel *agent_xmpp_channel);
     bool MulticastCleanupTimerExpired(uint64_t peer_sequence);
-    Timer *multicast_cleanup_timer() const {return multicast_cleanup_timer_;}
+    CleanupTimer &multicast_cleanup_timer() {return multicast_cleanup_timer_;}
 
     AgentIfMapVmExport *agent_ifmap_vm_export() const {
         return agent_ifmap_vm_export_.get();}
+    void StartConfigCleanupTimer(AgentXmppChannel *agent_xmpp_channel);
+    CleanupTimer &config_cleanup_timer() {return config_cleanup_timer_;}
 
     // Clear of decommissioned peer listener id for vrf specified
     void DeleteVrfStateOfDecommisionedPeers(DBTablePartBase *partition, 
@@ -76,8 +130,9 @@ private:
     uint64_t multicast_peer_identifier_;
     std::list<boost::shared_ptr<BgpPeer> > controller_peer_list_;
     boost::scoped_ptr<AgentIfMapVmExport> agent_ifmap_vm_export_;
-    Timer *unicast_cleanup_timer_;
-    Timer *multicast_cleanup_timer_;
+    UnicastCleanupTimer unicast_cleanup_timer_;
+    MulticastCleanupTimer multicast_cleanup_timer_;
+    ConfigCleanupTimer config_cleanup_timer_;
 };
 
 extern SandeshTraceBufferPtr ControllerTraceBuf;

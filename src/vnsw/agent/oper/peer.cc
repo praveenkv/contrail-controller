@@ -24,6 +24,7 @@ BgpPeer::BgpPeer(const Ip4Address &server_ip, const std::string &name,
     bgp_xmpp_peer_(bgp_xmpp_peer), 
     route_walker_(new ControllerRouteWalker(bgp_xmpp_peer_->agent(), this)) {
         is_disconnect_walk_ = false;
+        setup_time_ = UTCTimestampUsec();
 }
 
 BgpPeer::~BgpPeer() {

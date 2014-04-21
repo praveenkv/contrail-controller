@@ -94,11 +94,13 @@ public:
                                  DBEntryBase *e);
     void DeleteVrfState(DBTablePartBase *partition, DBEntryBase *entry);
 
+    uint32_t setup_time() const {return setup_time_;}
     Agent *agent() const;
 
 private: 
     Ip4Address server_ip_;
     DBTableBase::ListenerId id_;
+    uint32_t setup_time_;
     AgentXmppChannel *bgp_xmpp_peer_;
     tbb::atomic<bool> is_disconnect_walk_;
     boost::scoped_ptr<ControllerRouteWalker> route_walker_;

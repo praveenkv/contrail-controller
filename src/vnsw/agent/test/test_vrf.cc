@@ -76,7 +76,8 @@ protected:
         Agent::GetInstance()->controller()->DisConnect();
         client->WaitForIdle();
         if (Agent::GetInstance()->headless_agent_mode()) {
-            Agent::GetInstance()->controller()->unicast_cleanup_timer()->Fire();
+            Agent::GetInstance()->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
+            Agent::GetInstance()->controller()->multicast_cleanup_timer().cleanup_timer_->Fire();
             client->WaitForIdle();
             Agent::GetInstance()->controller()->Cleanup();
             client->WaitForIdle();

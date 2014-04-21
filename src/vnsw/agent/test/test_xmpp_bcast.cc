@@ -165,7 +165,7 @@ protected:
         xc->Shutdown();
         client->WaitForIdle();
 
-        Agent::GetInstance()->controller()->unicast_cleanup_timer()->Fire();
+        Agent::GetInstance()->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
         client->WaitForIdle();
         Agent::GetInstance()->controller()->Cleanup();
         client->WaitForIdle();
@@ -700,10 +700,10 @@ protected:
         client->Reset();
         DeleteVmportEnv(input, 2, 1, 0);
 
-        Agent::GetInstance()->controller()->multicast_cleanup_timer()->Fire();
+        Agent::GetInstance()->controller()->multicast_cleanup_timer().cleanup_timer_->Fire();
         client->WaitForIdle();
 
-        Agent::GetInstance()->controller()->unicast_cleanup_timer()->Fire();
+        Agent::GetInstance()->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
         client->WaitForIdle();
 
         WAIT_FOR(100, 1000, (client->CompositeNHDelWait(cnh_del_cnt) == true));
@@ -1200,7 +1200,7 @@ TEST_F(AgentXmppUnitTest, Test_mcast_peer_identifier) {
     EXPECT_TRUE(obj != NULL);
 
     WAIT_FOR(1000, 1000, obj->GetSourceMPLSLabel() == 9000);
-    Agent::GetInstance()->controller()->multicast_cleanup_timer()->Fire();
+    Agent::GetInstance()->controller()->multicast_cleanup_timer().cleanup_timer_->Fire();
     client->WaitForIdle();
 
     obj = MulticastHandler::GetInstance()->FindGroupObject("vrf1", addr);

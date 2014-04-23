@@ -811,7 +811,7 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
     WAIT_FOR(100, 10000, (sconnection->GetStateMcState() == xmsm::ESTABLISHED));
     WAIT_FOR(100, 10000, (cchannel->GetPeerState() == xmps::READY));
 
-    ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+    ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 0);
 
     //bring-down the channel
@@ -819,10 +819,10 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
     client->WaitForIdle();
 
     if (Agent::GetInstance()->headless_agent_mode()) {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 1);
     } else {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 0);
     }
 
@@ -831,10 +831,10 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
     client->WaitForIdle();
 
     if (Agent::GetInstance()->headless_agent_mode()) {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 1);
     } else {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 0);
     }
 
@@ -843,10 +843,10 @@ TEST_F(AgentXmppUnitTest, ConnectionUpDown_DecomissionedPeers) {
     client->WaitForIdle();
 
     if (Agent::GetInstance()->headless_agent_mode()) {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 2);
     } else {
-        ASSERT_TRUE(agent_->controller()->ControllerPeerListSize()
+        ASSERT_TRUE(agent_->controller()->DecommissionedPeerListSize()
                 == 0);
     }
 

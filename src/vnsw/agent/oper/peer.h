@@ -70,6 +70,7 @@ public:
         return server_ip_ < bgp->server_ip_;
     }
 
+    // For testing
     void SetVrfListenerId(DBTableBase::ListenerId id) { id_ = id; }
     DBTableBase::ListenerId GetVrfExportListenerId() { return id_; } 
     AgentXmppChannel *GetBgpXmppPeer() { return bgp_xmpp_peer_; }    
@@ -85,7 +86,8 @@ public:
         is_disconnect_walk_ = is_disconnect_walk;
     }
     ControllerRouteWalker *route_walker() const {
-        return route_walker_.get(); }
+        return route_walker_.get(); 
+    }
 
     //Helper routines to get export state for vrf and route
     DBState *GetVrfExportState(DBTablePartBase *partition,

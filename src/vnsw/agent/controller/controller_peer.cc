@@ -67,14 +67,14 @@ void AgentXmppChannel::CreateBgpPeer() {
 }
 
 void AgentXmppChannel::DeCommissionBgpPeer() {
-    //Unregister is in  destructor of peer. Unregister shud happen
+    //Unregister to db table is in  destructor of peer. Unregister shud happen
     //after dbstate for the id has happened w.r.t. this peer. If unregiter is 
     //done here, then there is a chance that it is reused and before state
     //is removed it is overwritten. Also it may happen that state delete may be
     //of somebody else.
 
     // Add the peer to global decommisioned list
-    agent_->controller()->AddToControllerPeerList(bgp_peer_id_);
+    agent_->controller()->AddToDecommissionedPeerList(bgp_peer_id_);
     //Reset channel BGP peer id
     bgp_peer_id_.reset();
 }
@@ -705,8 +705,7 @@ void AgentXmppChannel::WriteReadyCb(const boost::system::error_code &ec) {
 }
 
 void AgentXmppChannel::CleanConfigStale(AgentXmppChannel *agent_xmpp_channel) {
-    if (!agent_xmpp_channel)
-        return;
+    assert(agent_xmpp_channel);
 
     //Start a timer to flush off all old configs
     agent_xmpp_channel->agent()->controller()->
@@ -714,8 +713,7 @@ void AgentXmppChannel::CleanConfigStale(AgentXmppChannel *agent_xmpp_channel) {
 }
 
 void AgentXmppChannel::CleanUnicastStale(AgentXmppChannel *agent_xmpp_channel) {
-    if (!agent_xmpp_channel)
-        return;
+    assert(agent_xmpp_channel);
 
     // Start Cleanup Timers on stale bgp-peer's
     agent_xmpp_channel->agent()->controller()->
@@ -723,8 +721,7 @@ void AgentXmppChannel::CleanUnicastStale(AgentXmppChannel *agent_xmpp_channel) {
 }
 
 void AgentXmppChannel::CleanMulticastStale(AgentXmppChannel *agent_xmpp_channel) {
-    if (!agent_xmpp_channel)
-        return;
+    assert(agent_xmpp_channel);
 
     // Start Cleanup Timers on stale bgp-peers, use current peer identifier
     // for cleanup.
@@ -738,6 +735,8 @@ void AgentXmppChannel::CleanMulticastStale(AgentXmppChannel *agent_xmpp_channel)
  * indicates that still one or more active peer is present. Used for headless.
  * In case of non-headless mode delete the peer irrespective of all_peer_gone
  * state. 
+ *
+ * peer - decommissioned peer xmpp channel
  */
 void AgentXmppChannel::UnicastPeerDown(AgentXmppChannel *peer, 
                                        BgpPeer *peer_id) {
@@ -745,16 +744,15 @@ void AgentXmppChannel::UnicastPeerDown(AgentXmppChannel *peer,
     uint32_t active_xmpp_count = agent->controller()->
         ActiveXmppConnectionCount();
     VNController *vn_controller = agent->controller();
-    //TODO Cancel timer issue - when second peer comes up at say 4.5 mts and
-    //immediately first peer does down then there is a interval of few seconds
-    //for second peer to clean up whereas he shud have had 5 mts.
+    // Cancel timer - when second peer comes up at say 4.5 mts and
+    // immediately first peer does down then there is a interval of few seconds
+    // for second peer to clean up whereas he shud have had 5 mts.
     if (agent->headless_agent_mode()) {
         if (active_xmpp_count == 0) {
             //Enqueue stale marking of unicast v4 & l2 routes
             vn_controller->unicast_cleanup_timer().Cancel();
-            //vn_controller->CancelTimer(vn_controller->unicast_cleanup_timer())
             // Mark the peer path info as stale and retain it till new active
-            // peer comes over.
+            // peer comes over. So no deletion of path.
             peer_id->StalePeerRoutes();
             return;
         }
@@ -766,23 +764,22 @@ void AgentXmppChannel::UnicastPeerDown(AgentXmppChannel *peer,
         if (active_xmpp_count == 1) {
             // Dont depend on the xmpp channel sent as function argument;
             // it can be the deleted one and not the current active remaining.
+            // So find the active peer.
             AgentXmppChannel *active_xmpp_channel = agent->controller()->
-                GetLastActiveXmppChannel();
+                GetActiveXmppChannel();
             AgentXmppChannel::CleanUnicastStale(active_xmpp_channel);
-            // This is the case of first active peer.
-            // In case of peer going down and resulting in active channel list 
-            // going down to 1, remove the path from down peer.
-            if (active_xmpp_channel == peer) {
-                return;
-            }
         }
     }
+    // Dont bother, delete, we are safe
+    // These cases result in delete
+    // 1) Non headless - blindly delete
+    // 2) Headless (active_xmpp present) - Delete peer path
+    // Callback provided  for all walk done - this invokes cleanup in case
+    // delete of peer is issued because of channel getting disconnected.
+    peer_id->DelPeerRoutes(boost::bind(
+                           &VNController::ControllerPeerHeadlessAgentDelDone,
+                           agent->controller(), peer_id));
 
-    //Enqueue delete of unicast routes
-    // Callbacks for all walk done - this invokes cleanup in case delete of peer
-    // is issued because of channel getting disconnected.
-    peer_id->DelPeerRoutes(boost::bind(&VNController::ControllerPeerHeadlessAgentDelDone, 
-                                       agent->controller(), peer_id));
 }
 
 /*
@@ -955,11 +952,12 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
         // Switch-over Config Control-node
         if (peer_is_config_server) {
             //send cfg subscribe to other peer if exists
-            uint8_t o_idx = ((agent->GetXmppCfgServerIdx() == 0) ? 1: 0);
+            uint8_t idx = ((agent->GetXmppCfgServerIdx() == 0) ? 1: 0);
             agent->ResetXmppCfgServer();
+            AgentXmppChannel *new_cfg_peer = agent->GetAgentXmppChannel(idx);
 
-            AgentXmppChannel *new_cfg_peer = agent->GetAgentXmppChannel(o_idx);
-            if (new_cfg_peer && AgentXmppChannel::SetConfigPeer(new_cfg_peer)) {
+            if (IsBgpPeerActive(new_cfg_peer) && 
+                AgentXmppChannel::SetConfigPeer(new_cfg_peer)) {
                 AgentXmppChannel::CleanConfigStale(new_cfg_peer);
             } else {
                 //All cfg peers are gone, in headless agent cancel cleanup
@@ -979,20 +977,18 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
 
         // Switch-over Multicast Tree Builder
         if (peer_is_agent_mcast_builder) {
-            uint8_t o_idx = ((agent_mcast_builder->GetXmppServerIdx() == 0) 
+            uint8_t idx = ((agent_mcast_builder->GetXmppServerIdx() == 0) 
                              ? 1: 0);
             AgentXmppChannel *new_mcast_builder = 
-                agent->GetAgentXmppChannel(o_idx);
+                agent->GetAgentXmppChannel(idx);
 
             // Selection of new peer as mcast builder is dependant on following
             // criterias:
             // 1) Channel is present (new_mcast_builder is not null)
             // 2) Channel is in READY state
             // 3) BGP peer is commissioned for channel
-            bool evaluate_new_mcast_builder = (new_mcast_builder && 
-                (new_mcast_builder->GetXmppChannel()->GetPeerState() == 
-                 xmps::READY) && 
-                (new_mcast_builder->bgp_peer_id() != NULL));
+            bool evaluate_new_mcast_builder = 
+                IsBgpPeerActive(new_mcast_builder); 
 
             if (!evaluate_new_mcast_builder) {
                 new_mcast_builder = NULL;

@@ -130,7 +130,7 @@ Ip4Address IncrementIpAddress(Ip4Address base_addr) {
 void InitXmppServers() {
     Ip4Address addr = Ip4Address::from_string("127.0.0.0");
 
-    for (int i = 0; i <= num_ctrl_peers; i++) {
+    for (int i = 0; i < num_ctrl_peers; i++) {
         addr = IncrementIpAddress(addr);
         Agent::GetInstance()->SetXmppServer(addr.to_string(), i);
     }
@@ -547,6 +547,7 @@ protected:
         client->WaitForIdle();
 
         for (int i = 0; i < num_ctrl_peers; i++) {
+            Agent::GetInstance()->SetAgentXmppChannel(NULL, i);
             xc[i]->ConfigUpdate(new XmppConfigData());
             client->WaitForIdle(5);
             xs[i]->Shutdown();
@@ -554,23 +555,34 @@ protected:
             client->WaitForIdle();
             xc[i]->Shutdown();
             client->WaitForIdle();
+        }
+
+        Agent::GetInstance()->controller()->unicast_cleanup_timer().cleanup_timer_->Fire();
+        client->WaitForIdle();
+        Agent::GetInstance()->controller()->multicast_cleanup_timer().cleanup_timer_->Fire();
+        client->WaitForIdle();
+        Agent::GetInstance()->controller()->Cleanup();
+        client->WaitForIdle();
+        WAIT_FOR(1000, 1000, (Agent::GetInstance()->controller()->DecommissionedPeerListSize() 
+                              == 0));
+
+        for (int i = 0; i < num_ctrl_peers; i++) {
             TcpServerManager::DeleteServer(xs[i]);
             TcpServerManager::DeleteServer(xc[i]);
         }
-        Agent::GetInstance()->controller()->Cleanup();
-        client->WaitForIdle();
-        WAIT_FOR(1000, 1000, (Agent::GetInstance()->controller()->ControllerPeerListSize() == 0));
         evm_.Shutdown();
         thread_.Join();
         client->WaitForIdle();
     }
 
     XmppChannelConfig *CreateXmppChannelCfg(const char *address, int port,
+                                            const char *local_address, 
                                             const string &from, const string &to,
                                             bool isclient) {
         XmppChannelConfig *cfg = new XmppChannelConfig(isclient);
         cfg->endpoint.address(boost::asio::ip::address::from_string(address));
         cfg->endpoint.port(port);
+        cfg->local_endpoint.address(boost::asio::ip::address::from_string(local_address));
         cfg->ToAddr = to;
         cfg->FromAddr = from;
         return cfg;
@@ -614,7 +626,7 @@ protected:
             //New config data for this channel and peer
             xmppc_cfg[i] = new XmppConfigData;
             xmppc_cfg[i]->AddXmppChannelConfig(CreateXmppChannelCfg(addr.to_string().c_str(),
-                                               xs[i]->GetPort(),
+                                               xs[i]->GetPort(), addr.to_string().c_str(),
                                                XmppInit::kAgentNodeJID, 
                                                XmppInit::kControlNodeJID, true));
             xc[i]->ConfigUpdate(xmppc_cfg[i]);

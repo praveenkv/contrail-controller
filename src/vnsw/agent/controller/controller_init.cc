@@ -28,9 +28,11 @@ using namespace boost::asio;
 SandeshTraceBufferPtr ControllerTraceBuf(SandeshTraceBufferCreate(
     "Controller", 1000));
 
-CleanupTimer::CleanupTimer(Agent *agent, std::string timer_name)
+CleanupTimer::CleanupTimer(Agent *agent, const std::string &timer_name,
+                           uint32_t default_stale_timer_interval)
     : agent_(agent), extension_interval_(0), last_restart_time_(0),
-    agent_xmpp_channel_(NULL) {
+    agent_xmpp_channel_(NULL), running_(false),
+    stale_timer_interval_(default_stale_timer_interval) {
     cleanup_timer_ = 
         TimerManager::CreateTimer(*(agent->GetEventManager()->
                                     io_service()), timer_name,
@@ -41,15 +43,13 @@ CleanupTimer::CleanupTimer(Agent *agent, std::string timer_name)
 bool CleanupTimer::Cancel() {
     agent_xmpp_channel_ = NULL;
     last_restart_time_ = 0;
+    running_ = false;
 
     if (cleanup_timer_ == NULL) {
         return true;
     }
 
-    if (cleanup_timer_->running()) {
-        return cleanup_timer_->Cancel();
-    }
-    return true;
+    return cleanup_timer_->Cancel();
 }
 
 void CleanupTimer::RescheduleTimer(AgentXmppChannel *agent_xmpp_channel) {
@@ -57,13 +57,13 @@ void CleanupTimer::RescheduleTimer(AgentXmppChannel *agent_xmpp_channel) {
     if (agent_xmpp_channel_ == agent_xmpp_channel)
         return;
 
-    if (cleanup_timer_->running()) { 
+    if (running_) { 
         extension_interval_ = GetTimerExtensionValue(agent_xmpp_channel);
     }
 }
 
 void CleanupTimer::Start(AgentXmppChannel *agent_xmpp_channel) {
-    if (cleanup_timer_->running()) {
+    if (running_) {
         // Null Agent XMPP channel signifies no reschedule required
         if (agent_xmpp_channel == NULL) {
             if (cleanup_timer_->Cancel() == false) {
@@ -77,6 +77,7 @@ void CleanupTimer::Start(AgentXmppChannel *agent_xmpp_channel) {
         cleanup_timer_->Start(GetTimerInterval(),
                               boost::bind(&CleanupTimer::TimerExpiredCallback, 
                                           this));
+        running_ = true;
     }
 
     last_restart_time_ = UTCTimestampUsec();
@@ -86,16 +87,21 @@ void CleanupTimer::Start(AgentXmppChannel *agent_xmpp_channel) {
 bool CleanupTimer::TimerExpiredCallback() {
     if (extension_interval_) {
         // Restart the timer for postpone_interval specified.
-        cleanup_timer_->Reschedule(extension_interval_);
-        //cleanup_timer_->Start(extension_interval_,
-        //                      boost::bind(&CleanupTimer::TimerExpiredCallback,
-        //                                  this));
-        //Reset postpone_interval
+        if (cleanup_timer_->Reschedule(extension_interval_) == false) {
+            CONTROLLER_TRACE(Generic, "Reschedule timer failed");
+        }
+
+        //Reset extension interval 
         extension_interval_ = 0;
         return true;
     } 
     
     TimerExpirationDone();
+
+    //Reset all parameters
+    extension_interval_ = 0;
+    agent_xmpp_channel_ = NULL;
+    running_ = false;
     return true;
 }
 
@@ -127,10 +133,11 @@ void ConfigCleanupTimer::TimerExpirationDone() {
     agent_->GetIfMapAgentStaleCleaner()->StaleTimeout();
 }
 
-VNController::VNController(Agent *agent) : agent_(agent), multicast_peer_identifier_(0),
+VNController::VNController(Agent *agent) 
+    : agent_(agent), multicast_peer_identifier_(0),
     unicast_cleanup_timer_(agent), multicast_cleanup_timer_(agent), 
     config_cleanup_timer_(agent) {
-        controller_peer_list_.clear();
+        decommissioned_peer_list_.clear();
 }
 
 VNController::~VNController() {
@@ -341,7 +348,7 @@ void VNController::Cleanup() {
 
     agent_->controller()->increment_multicast_peer_identifier();
     agent_->SetControlNodeMulticastBuilder(NULL);
-    controller_peer_list_.clear();
+    decommissioned_peer_list_.clear();
     agent_ifmap_vm_export_.reset();
 }
 
@@ -541,7 +548,7 @@ uint8_t VNController::ActiveXmppConnectionCount() {
     return active_xmpps;
 }
 
-AgentXmppChannel *VNController::GetLastActiveXmppChannel() {
+AgentXmppChannel *VNController::GetActiveXmppChannel() {
     for (uint8_t count = 0; count < MAX_XMPP_SERVERS; count++) {
         AgentXmppChannel *xc = agent_->GetAgentXmppChannel(count);
        if (xc) {
@@ -554,8 +561,8 @@ AgentXmppChannel *VNController::GetLastActiveXmppChannel() {
     return NULL;
 }
 
-void VNController::AddToControllerPeerList(BgpPeerPtr peer) {
-    controller_peer_list_.push_back(peer);
+void VNController::AddToDecommissionedPeerList(BgpPeerPtr peer) {
+    decommissioned_peer_list_.push_back(peer);
 }
 
 /*
@@ -566,11 +573,11 @@ void VNController::AddToControllerPeerList(BgpPeerPtr peer) {
  */
 void VNController::ControllerPeerHeadlessAgentDelDone(BgpPeer *bgp_peer) {
     for (std::list<boost::shared_ptr<BgpPeer> >::iterator it  = 
-         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
+         decommissioned_peer_list_.begin(); it != decommissioned_peer_list_.end(); 
          ++it) {
         BgpPeer *peer = static_cast<BgpPeer *>((*it).get());
         if (peer == bgp_peer) {
-            controller_peer_list_.remove(*it);
+            decommissioned_peer_list_.remove(*it);
             return;
         }
     }
@@ -587,8 +594,8 @@ void VNController::ControllerPeerHeadlessAgentDelDone(BgpPeer *bgp_peer) {
  */
 bool VNController::UnicastCleanupTimerExpired() {
     for (std::list<boost::shared_ptr<BgpPeer> >::iterator it  = 
-         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
-         ++it) {
+         decommissioned_peer_list_.begin(); 
+         it != decommissioned_peer_list_.end(); ++it) {
         BgpPeer *bgp_peer = static_cast<BgpPeer *>((*it).get());
         bgp_peer->DelPeerRoutes(
             boost::bind(&VNController::ControllerPeerHeadlessAgentDelDone, 
@@ -644,7 +651,8 @@ void VNController::StartConfigCleanupTimer(AgentXmppChannel *agent_xmpp_channel)
 void VNController::DeleteVrfStateOfDecommisionedPeers(DBTablePartBase *partition,
                                                       DBEntryBase *e) {
     for (std::list<boost::shared_ptr<BgpPeer> >::iterator it  = 
-         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
+         decommissioned_peer_list_.begin(); 
+         it != decommissioned_peer_list_.end(); 
          ++it) {
         BgpPeer *bgp_peer = static_cast<BgpPeer *>((*it).get());
         bgp_peer->DeleteVrfState(partition, e);

@@ -608,7 +608,6 @@ private:
 };
 
 IFMapAgentStaleCleaner::~IFMapAgentStaleCleaner() {
-    //TimerManager::DeleteTimer(timer_);
 }
 
 IFMapAgentStaleCleaner::IFMapAgentStaleCleaner(DB *db, DBGraph *graph, 

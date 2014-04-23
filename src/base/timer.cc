@@ -115,13 +115,16 @@ bool Timer::Start(int time, Handler handler, ErrorHandler error_handler) {
     return true;
 }
 
-void Timer::Reschedule(int time) 
+bool Timer::Reschedule(int time)
 {
     if (state_ != Fired)
-        return;
+        return false;
+
     if (time < 0)
-        return;
+        return false;
+
     time_ = time;
+    return true;
 }
 
 // Cancel a running timer

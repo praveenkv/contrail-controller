@@ -4,7 +4,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <sandesh/sandesh.h>
+#include <sandesh/sandesh_types.h>
+#include <sandesh/sandesh_trace.h>
 #include "controller/controller_route_walker.h"
+#include "controller/controller_init.h"
+#include "controller/controller_types.h"
 #include "controller/controller_vrf_export.h"
 #include "controller/controller_export.h"
 #include "oper/route_common.h"
@@ -68,6 +73,8 @@ bool ControllerRouteWalker::VrfNotifyAll(DBTablePartBase *partition,
         //Pass this object pointer so that VrfExport::Notify can start the route
         //walk if required on this VRF. Also it adds state if none is found.
         VrfExport::Notify(bgp_peer->GetBgpXmppPeer(), partition, entry);
+        CONTROLLER_TRACE(Walker, "Vrf Notify all", vrf->GetName(),
+                         bgp_peer->GetName());
         return true;
     }
     return false;
@@ -86,6 +93,8 @@ bool ControllerRouteWalker::VrfDelPeer(DBTablePartBase *partition,
                                     &ControllerRouteWalker::RouteWalkDoneForVrf,
                                     this, _1));
         StartRouteWalk(vrf);
+        CONTROLLER_TRACE(Walker, "Vrf DelPeer", vrf->GetName(), 
+                         peer_->GetName());
         return true;
     }
     return false;
@@ -93,11 +102,15 @@ bool ControllerRouteWalker::VrfDelPeer(DBTablePartBase *partition,
 
 bool ControllerRouteWalker::VrfNotifyMulticast(DBTablePartBase *partition, 
                                                DBEntryBase *entry) {
+    VrfEntry *vrf = static_cast<VrfEntry *>(entry);
+    CONTROLLER_TRACE(Walker, "Vrf Multicast", vrf->GetName(), peer_->GetName());
     return VrfNotifyInternal(partition, entry);
 }
 
 bool ControllerRouteWalker::VrfNotifyStale(DBTablePartBase *partition, 
                                            DBEntryBase *entry) {
+    VrfEntry *vrf = static_cast<VrfEntry *>(entry);
+    CONTROLLER_TRACE(Walker, "Vrf Stale", vrf->GetName(), peer_->GetName());
     return VrfNotifyInternal(partition, entry);
 }
 
@@ -173,11 +186,17 @@ bool ControllerRouteWalker::RouteNotifyInternal(DBTablePartBase *partition,
 
 bool ControllerRouteWalker::RouteNotifyAll(DBTablePartBase *partition, 
                                            DBEntryBase *entry) {
+    AgentRoute *route = static_cast<AgentRoute *>(entry);
+    CONTROLLER_TRACE(Walker, "Route NotifyAll", route->ToString(), 
+                     peer_->GetName());
     return RouteNotifyInternal(partition, entry);
 }
 
 bool ControllerRouteWalker::RouteNotifyMulticast(DBTablePartBase *partition, 
                                                  DBEntryBase *entry) {
+    AgentRoute *route = static_cast<AgentRoute *>(entry);
+    CONTROLLER_TRACE(Walker, "Route Multicast Notify", route->ToString(), 
+                     peer_->GetName());
     return RouteNotifyInternal(partition, entry);
 }
 
@@ -190,6 +209,9 @@ bool ControllerRouteWalker::RouteDelPeer(DBTablePartBase *partition,
     if (!route)
         return true;
 
+    CONTROLLER_TRACE(Walker, "Route Delpeer", route->ToString(), 
+                     peer_->GetName());
+
     VrfEntry *vrf = route->vrf();
     DBTablePartBase *vrf_partition = agent()->GetVrfTable()->
         GetTablePartition(vrf);
@@ -201,6 +223,8 @@ bool ControllerRouteWalker::RouteDelPeer(DBTablePartBase *partition,
         route->ClearState(partition->parent(), vrf_state->rt_export_[route->
                           GetTableType()]->GetListenerId());
         delete state;
+        CONTROLLER_TRACE(Walker, "DelPeer route walk, delete state", 
+                         route->ToString(), peer_->GetName());
     }
 
     vrf->GetRouteTable(route->GetTableType())->DeletePathFromPeer(partition,
@@ -215,6 +239,9 @@ bool ControllerRouteWalker::RouteStaleMarker(DBTablePartBase *partition,
         route->vrf()->GetRouteTable(route->GetTableType())->
             StalePathFromPeer(partition, route, peer_);
     }
+
+    CONTROLLER_TRACE(Walker, "Route Stale", route->ToString(), 
+                     peer_->GetName());
     return true;
 }
 
@@ -226,6 +253,8 @@ void ControllerRouteWalker::RouteWalkDoneForVrf(VrfEntry *vrf) {
     if (type_ != DELPEER)
         return;
 
+    CONTROLLER_TRACE(Walker, "Route Walk done", vrf->GetName(), 
+                     peer_->GetName());
     BgpPeer *bgp_peer = static_cast<BgpPeer *>(peer_);
     DBEntryBase *entry = static_cast<DBEntryBase *>(vrf);
     DBTablePartBase *partition = agent()->GetVrfTable()->GetTablePartition(vrf);
@@ -243,5 +272,6 @@ void ControllerRouteWalker::Start(Type type, bool associate,
 }
 
 void ControllerRouteWalker::Cancel() {
+    CONTROLLER_TRACE(Walker, "Cancel Vrf Walk", "", peer_->GetName());
     CancelVrfWalk(); 
 }

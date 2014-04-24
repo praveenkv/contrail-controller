@@ -89,7 +89,8 @@ void RouteExport::Notify(AgentXmppChannel *bgp_xmpp_peer,
         VrfEntry *vrf = route->vrf();
         DBTablePartBase *vrf_partition =
             bgp_xmpp_peer->agent()->GetVrfTable()->GetTablePartition(vrf);
-        BgpPeer *bgp_peer = static_cast<BgpPeer *>(bgp_xmpp_peer->bgp_peer_id());
+        BgpPeer *bgp_peer = static_cast<BgpPeer *>(bgp_xmpp_peer->
+                                                   bgp_peer_id());
         DBTableBase::ListenerId vrf_id = bgp_peer->GetVrfExportListenerId();
         VrfExport::State *vs = static_cast<VrfExport::State *>
             (vrf->GetState(vrf_partition->parent(), vrf_id));

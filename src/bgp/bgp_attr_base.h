@@ -44,7 +44,8 @@ struct BgpAttribute : public ParseObject {
     enum Subcode {
         OList = 1,
         LabelBlock = 2,
-        SourceRd = 3
+        SourceRd = 3,
+        Esi = 4
     };
 
     BgpAttribute() : code(0), subcode(0), flags(0) { }

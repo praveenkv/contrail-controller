@@ -389,6 +389,21 @@ std::string BgpAttrSourceRd::ToString() const {
     return source_rd.ToString();
 }
 
+int BgpAttrEsi::CompareTo(const BgpAttribute &rhs_attr) const {
+    int ret = BgpAttribute::CompareTo(rhs_attr);
+    if (ret != 0) return ret;
+    KEY_COMPARE(esi, static_cast<const BgpAttrEsi &>(rhs_attr).esi);
+    return 0;
+}
+
+void BgpAttrEsi::ToCanonical(BgpAttr *attr) {
+    attr->set_esi(esi);
+}
+
+std::string BgpAttrEsi::ToString() const {
+    return esi.ToString();
+}
+
 BgpAttr::BgpAttr()
     : origin_(BgpAttrOrigin::INCOMPLETE), nexthop_(),
       med_(0), local_pref_(0), atomic_aggregate_(false),
@@ -580,6 +595,14 @@ BgpAttrPtr BgpAttrDB::ReplaceSourceRdAndLocate(const BgpAttr *attr,
                                                RouteDistinguisher source_rd) {
     BgpAttr *clone = new BgpAttr(*attr);
     clone->set_source_rd(source_rd);
+    return Locate(clone);
+}
+
+// Return a clone of attribute with updated esi
+BgpAttrPtr BgpAttrDB::ReplaceEsiAndLocate(const BgpAttr *attr,
+                                          EthernetSegmentId esi) {
+    BgpAttr *clone = new BgpAttr(*attr);
+    clone->set_esi(esi);
     return Locate(clone);
 }
 

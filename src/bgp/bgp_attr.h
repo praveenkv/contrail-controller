@@ -20,6 +20,7 @@
 #include "bgp/community.h"
 
 #include "net/address.h"
+#include "net/esi.h"
 #include "net/rd.h"
 
 // BGP UPDATE attributes: as-path, community, ext-community, next-hop,
@@ -356,6 +357,17 @@ struct BgpAttrSourceRd : public BgpAttribute {
     virtual std::string ToString() const;
 };
 
+struct BgpAttrEsi : public BgpAttribute {
+    BgpAttrEsi() : BgpAttribute(0, Esi, 0) {}
+    BgpAttrEsi(const BgpAttribute &rhs) : BgpAttribute(rhs) {}
+    explicit BgpAttrEsi(EthernetSegmentId esi) :
+            BgpAttribute(0, Esi, 0), esi(esi) {}
+    EthernetSegmentId esi;
+    virtual int CompareTo(const BgpAttribute &rhs_attr) const;
+    virtual void ToCanonical(BgpAttr *attr);
+    virtual std::string ToString() const;
+};
+
 typedef std::vector<BgpAttribute *> BgpAttrSpec;
 
 // Canonicalized BGP attribute
@@ -380,6 +392,7 @@ public:
         aggregator_address_ = address;
     }
     void set_source_rd(RouteDistinguisher source_rd) { source_rd_ = source_rd; }
+    void set_esi(EthernetSegmentId esi) { esi_ = esi; }
     void set_as_path(const AsPathSpec *spec);
     void set_community(const CommunitySpec *comm);
     void set_ext_community(ExtCommunityPtr comm);
@@ -399,6 +412,7 @@ public:
     uint32_t neighbor_as() const;
     const IpAddress &aggregator_adderess() const { return aggregator_address_; }
     RouteDistinguisher source_rd() const { return source_rd_; }
+    EthernetSegmentId esi() const { return esi_; }
     const AsPath *as_path() const { return as_path_.get(); }
     int as_path_count() const { return as_path_ ? as_path_->AsCount() : 0; }
     const Community *community() const { return community_.get(); }
@@ -425,6 +439,7 @@ private:
     as_t aggregator_as_num_;
     IpAddress aggregator_address_;
     RouteDistinguisher source_rd_;
+    EthernetSegmentId esi_;
     AsPathPtr as_path_;
     CommunityPtr community_;
     ExtCommunityPtr ext_community_;
@@ -470,6 +485,7 @@ public:
                                                uint32_t local_pref);
     BgpAttrPtr ReplaceSourceRdAndLocate(const BgpAttr *attr,
                                         RouteDistinguisher source_rd);
+    BgpAttrPtr ReplaceEsiAndLocate(const BgpAttr *attr, EthernetSegmentId esi);
     BgpAttrPtr ReplaceMulticastEdgeDiscoveryAndLocate(const BgpAttr *attr,
                                         BgpAttrPtr edge_discovery_attribute) {
         return attr;

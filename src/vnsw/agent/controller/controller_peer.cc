@@ -1087,7 +1087,7 @@ void AgentXmppChannel::HandleAgentXmppClientChannelEvent(AgentXmppChannel *peer,
                                  GetBgpPeerName(), 
                                  "Peer elected Multicast Tree Builder"); 
             }
-        } 
+        }
     }
 }
 

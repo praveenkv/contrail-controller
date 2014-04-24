@@ -92,11 +92,11 @@ bool TimerCbReschedule(Timer *timer, int *new_timeout) {
     timer_count_.fetch_and_increment();
 
     if(*new_timeout) {
-    	timer->Reschedule(*new_timeout);
-    	*new_timeout = 0;
-    	return true;
+        timer->Reschedule(*new_timeout);
+        *new_timeout = 0;
+        return true;
     } else {
-    	return false;
+        return false;
     }
 }
 
@@ -293,7 +293,6 @@ TEST_F(TimerUT, cancel_fired_2) {
     EXPECT_TRUE(TimerManager::DeleteTimer(sleepytimer));
 }
 
-<<<<<<< HEAD
 TEST_F(TimerUT, reschedule_1) {
     TimerTest *timer1 = new TimerTest(*evm_->io_service(), "Basic-1");
     TimerTest *timer2 = new TimerTest(*evm_->io_service(), "Basic-2");
@@ -322,7 +321,8 @@ TEST_F(TimerUT, reschedule_2) {
     task_util::WaitForIdle();
     EXPECT_TRUE(TimerManager::DeleteTimer(timer1));
     EXPECT_TRUE(TimerManager::DeleteTimer(timer2));
-=======
+}
+
 TEST_F(TimerUT, reschedule_failed_1) {
     // Start a timer and try rescheduling with timer value 0, result should be
     // a failure.
@@ -344,7 +344,6 @@ TEST_F(TimerUT, reschedule_failed_2) {
     ValidateTimerCount(1, 200);
     task_util::WaitForIdle();
     EXPECT_TRUE(TimerManager::DeleteTimer(timer));
->>>>>>> minor changes
 }
 
 int main(int argc, char *argv[]) {

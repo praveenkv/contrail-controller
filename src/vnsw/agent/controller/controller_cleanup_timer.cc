@@ -34,8 +34,7 @@ CleanupTimer::CleanupTimer(Agent *agent, const std::string &timer_name,
 }
 
 bool CleanupTimer::Cancel() {
-    CONTROLLER_TRACE(Timer, "Cleanup ", timer_name(), 
-              agent_xmpp_channel_ ? agent_xmpp_channel_->GetBgpPeerName() : "");
+    CONTROLLER_TRACE(Timer, "Cleanup ", timer_name(), "");
     agent_xmpp_channel_ = NULL;
     last_restart_time_ = 0;
     running_ = false;
@@ -75,6 +74,8 @@ void CleanupTimer::Start(AgentXmppChannel *agent_xmpp_channel) {
         // Non headless mode - Cancel and then start 
         if (agent_xmpp_channel->agent()->headless_agent_mode()) {
             RescheduleTimer(agent_xmpp_channel);
+            last_restart_time_ = UTCTimestampUsec();
+            agent_xmpp_channel_ = agent_xmpp_channel;
             return;
         } else {
             if (cleanup_timer_->Cancel() == false) {

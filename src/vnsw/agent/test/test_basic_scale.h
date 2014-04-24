@@ -608,9 +608,7 @@ protected:
         //expect subscribe for __default__ at the mock server
 
         ControlNodeMockBgpXmppPeer *mock_peer_l = mock_peer[i].get();
-        cout << "DEBUGMS " << mock_peer_l->Count() << endl;
         WAIT_FOR(1000, 10000, (mock_peer_l->Count() == mock_peer_count));
-        cout << "DEBUGMS2 " << mock_peer_l->Count() << " " << mock_peer_count << endl;
     }
 
     void BuildControlPeers() {

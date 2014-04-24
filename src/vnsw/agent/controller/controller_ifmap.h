@@ -18,7 +18,8 @@ class XmppChannel;
 
 class AgentIfMapXmppChannel {
 public:
-    explicit AgentIfMapXmppChannel(Agent *agent, XmppChannel *channel, uint8_t count);
+    explicit AgentIfMapXmppChannel(Agent *agent, XmppChannel *channel,
+                                   uint8_t count);
     virtual ~AgentIfMapXmppChannel();
 
     virtual const std::string &identifier() const {

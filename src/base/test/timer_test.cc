@@ -324,8 +324,8 @@ TEST_F(TimerUT, reschedule_2) {
     EXPECT_TRUE(TimerManager::DeleteTimer(timer2));
 =======
 TEST_F(TimerUT, reschedule_failed_1) {
-    // Start a timer and try rescheduling with timer value 0, result should be a
-    // failure.
+    // Start a timer and try rescheduling with timer value 0, result should be
+    // a failure.
     TimerTest *timer = new TimerTest(*evm_->io_service(), "reschedule-fail-1");
     int new_timeout = 0;
     timer->Start(200, boost::bind(&TimerCbReschedule, timer, &new_timeout));

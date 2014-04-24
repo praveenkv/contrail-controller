@@ -543,59 +543,15 @@ void VNController::StartConfigCleanupTimer(
         config_cleanup_timer_.Start(agent_xmpp_channel);
 }
 
-void VNController::CreateGlobalControllerData() {
-    //Setup the global controller
-    if (!global_controller_data_) {
-        global_controller_data_ = 
-            new AgentControllerGlobalData(Agent::GetInstance(), true);
-    }
-}
-
-void VNController::AddToControllerPeerList(Peer *peer) {
-    controller_peer_list_.push_back(peer);
-}
-
-void VNController::ControllerPeerHeadlessAgentDelDone(Peer *bgp_peer) {
-    for (std::list<boost::shared_ptr<Peer> >::iterator it  = 
-         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
-         ++it) {
-        Peer *peer = static_cast<Peer *>((*it).get());
-        if (peer == bgp_peer) {
-            controller_peer_list_.remove(*it);
-            return;
-        }
-    }
-}
-
-bool VNController::ControllerPeerCleanupTimerExpired() {
-    for (std::list<boost::shared_ptr<Peer> >::iterator it  = 
-         controller_peer_list_.begin(); it != controller_peer_list_.end(); 
+// Helper to iterate thru all decommisioned peer and delete the vrf state for
+// specified vrf entry. Called on per VRF basis.
+void VNController::DeleteVrfStateOfDecommisionedPeers(
+                                                DBTablePartBase *partition,
+                                                DBEntryBase *e) {
+    for (BgpPeerIterator it  = decommissioned_peer_list_.begin(); 
+         it != decommissioned_peer_list_.end(); 
          ++it) {
         BgpPeer *bgp_peer = static_cast<BgpPeer *>((*it).get());
-        bgp_peer->DelPeerRoutes(
-            boost::bind(&VNController::ControllerPeerHeadlessAgentDelDone, this, bgp_peer));
-    }
-
-    return true;
-}
-
-void VNController::ControllerPeerStartCleanupTimer() {
-    uint32_t cleanup_timer = kUnicastStaleTimer;
-
-    ControllerPeerCancelCleanupTimer();
-    if (!(agent_->headless_agent_mode())) {
-        cleanup_timer = 0;
-    }
-    cleanup_timer_->Start(cleanup_timer,
-        boost::bind(&VNController::ControllerPeerCleanupTimerExpired, this));
-}
-
-void VNController::ControllerPeerCancelCleanupTimer() {
-    if (cleanup_timer_ == NULL) {
-        return;
-    }
-
-    if (cleanup_timer_->running()) {
-        cleanup_timer_->Cancel();
+        bgp_peer->DeleteVrfState(partition, e);
     }
 }

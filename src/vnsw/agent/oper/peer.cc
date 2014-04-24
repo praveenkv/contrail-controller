@@ -123,7 +123,8 @@ DBState *BgpPeer::GetRouteExportState(DBTablePartBase *partition,
     Agent::RouteTableType table_type = route->GetTableType();
     RouteExport::State *state = NULL;
     if (vs->rt_export_[table_type]) {
-        state = static_cast<RouteExport::State *>(route->GetState(partition->parent(),
+        state = static_cast<RouteExport::State *>(route->GetState(partition->
+                                                                  parent(),
                             vs->rt_export_[table_type]->GetListenerId()));
     }
     return state;

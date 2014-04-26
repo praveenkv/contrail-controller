@@ -188,7 +188,8 @@ struct MatchPolicy {
         reverse_sg_action(0), m_reverse_out_sg_acl_l(),
         reverse_out_sg_rule_present(false), reverse_out_sg_action(0),
         m_mirror_acl_l(), mirror_action(0), m_out_mirror_acl_l(),
-        out_mirror_action(0), sg_action_summary(0), action_info() {
+        out_mirror_action(0), m_vrf_assign_acl_l(), vrf_assign_acl_action(0),
+        sg_action_summary(0), action_info() {
     }
 
     ~MatchPolicy() {}
@@ -221,6 +222,9 @@ struct MatchPolicy {
     MatchAclParamsList m_out_mirror_acl_l;
     uint32_t out_mirror_action;
 
+    MatchAclParamsList m_vrf_assign_acl_l;
+    uint32_t vrf_assign_acl_action;
+
     // Summary of SG actions
     uint32_t sg_action_summary;
     FlowAction action_info;
@@ -231,8 +235,8 @@ struct FlowData {
         source_vn(""), dest_vn(""), source_sg_id_l(), dest_sg_id_l(),
         flow_source_vrf(VrfEntry::kInvalidIndex),
         flow_dest_vrf(VrfEntry::kInvalidIndex), match_p(), vn_entry(NULL),
-        intf_entry(NULL), vm_entry(NULL), mirror_vrf(VrfEntry::kInvalidIndex),
-        dest_vrf(),
+        intf_entry(NULL), in_vm_entry(NULL), out_vm_entry(NULL),
+        mirror_vrf(VrfEntry::kInvalidIndex), dest_vrf(),
         component_nh_idx((uint32_t)CompositeNH::kInvalidComponentNHIdx),
         nh_state_(NULL), source_plen(0), dest_plen(0) {}
 
@@ -246,7 +250,8 @@ struct FlowData {
     MatchPolicy match_p;
     VnEntryConstRef vn_entry;
     InterfaceConstRef intf_entry;
-    VmEntryConstRef vm_entry;
+    VmEntryConstRef in_vm_entry;
+    VmEntryConstRef out_vm_entry;
     uint32_t mirror_vrf;
 
     uint16_t dest_vrf;
@@ -334,6 +339,7 @@ class FlowEntry {
     void SetOutPacketHeader(PacketHeader *hdr);
     void ComputeReflexiveAction();
     bool DoPolicy();
+    void GetVrfAssignAcl();
     uint32_t MatchAcl(const PacketHeader &hdr,
                       MatchAclParamsList &acl, bool add_implicit_deny,
                       bool add_implicit_allow);
@@ -347,7 +353,8 @@ class FlowEntry {
     void UpdateReflexiveAction();
     const Interface *intf_entry() const { return data_.intf_entry.get();}
     const VnEntry *vn_entry() const { return data_.vn_entry.get();}
-    const VmEntry *vm_entry() const { return data_.vm_entry.get();}
+    const VmEntry *in_vm_entry() const { return data_.in_vm_entry.get();}
+    const VmEntry *out_vm_entry() const { return data_.out_vm_entry.get();}
     const MatchPolicy &match_p() const { return data_.match_p; }
     void SetAclFlowSandeshData(const AclDBEntry *acl,
             FlowSandeshData &fe_sandesh_data) const;
@@ -360,6 +367,8 @@ class FlowEntry {
     void set_dest_sg_id_l(SecurityGroupList &sg_l) { data_.dest_sg_id_l = sg_l; }
     int linklocal_src_port() const { return linklocal_src_port_; }
     int linklocal_src_port_fd() const { return linklocal_src_port_fd_; }
+    const std::string& acl_assigned_vrf() const;
+    uint32_t acl_assigned_vrf_index() const;
 private:
     friend class FlowTable;
     friend class FlowStatsCollector;
@@ -451,12 +460,7 @@ public:
         SecurityGroupList sg_l_;
     };
 
-    FlowTable(Agent *agent) : 
-        agent_(agent), flow_entry_map_(), acl_flow_tree_(),
-        linklocal_flow_count_(), acl_listener_id_(),
-        intf_listener_id_(), vn_listener_id_(), vm_listener_id_(),
-        vrf_listener_id_(), nh_listener_(NULL),
-        route_key_(NULL, Ip4Address(), 32, false) {}
+    FlowTable(Agent *agent);
     virtual ~FlowTable();
     
     void Init();
@@ -470,7 +474,10 @@ public:
     size_t Size() { return flow_entry_map_.size(); }
     void VnFlowCounters(const VnEntry *vn, uint32_t *in_count, 
                         uint32_t *out_count);
+    uint32_t VmFlowCount(const VmEntry *vm);
     uint32_t VmLinkLocalFlowCount(const VmEntry *vm);
+    uint32_t max_vm_flows() const { return max_vm_flows_; }
+    void set_max_vm_flows(uint32_t num_flows) { max_vm_flows_ = num_flows; }
     uint32_t linklocal_flow_count() const { return linklocal_flow_count_; }
     Agent *agent() const { return agent_; }
 
@@ -511,6 +518,7 @@ private:
     VmFlowTree vm_flow_tree_;
     RouteFlowTree route_flow_tree_;
 
+    uint32_t max_vm_flows_;     // maximum flow count allowed per vm
     uint32_t linklocal_flow_count_;  // total linklocal flows in the agent
 
     DBTableBase::ListenerId acl_listener_id_;
@@ -541,6 +549,7 @@ private:
     void DeleteFlowInfo(FlowEntry *fe);
     void DeleteVnFlowInfo(FlowEntry *fe);
     void DeleteVmFlowInfo(FlowEntry *fe);
+    void DeleteVmFlowInfo(FlowEntry *fe, const VmEntry *vm);
     void DeleteIntfFlowInfo(FlowEntry *fe);
     void DeleteRouteFlowInfo(FlowEntry *fe);
     void DeleteAclFlowInfo(const AclDBEntry *acl, FlowEntry* flow, const AclEntryIDList &id_list);
@@ -555,6 +564,7 @@ private:
     void AddIntfFlowInfo(FlowEntry *fe);
     void AddVnFlowInfo(FlowEntry *fe);
     void AddVmFlowInfo(FlowEntry *fe);
+    void AddVmFlowInfo(FlowEntry *fe, const VmEntry *vm);
     void AddRouteFlowInfo(FlowEntry *fe);
 
     void DeleteAclFlows(const AclDBEntry *acl);
@@ -679,7 +689,7 @@ struct IntfFlowInfo {
 };
 
 struct VmFlowInfo {
-    VmFlowInfo() {}
+    VmFlowInfo() : linklocal_flow_count() {}
     ~VmFlowInfo() {}
 
     VmEntryConstRef vm_entry;

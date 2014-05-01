@@ -853,8 +853,7 @@ bool BgpPeer::MpNlriAllowed(uint16_t afi, uint8_t safi) {
 }
 
 void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
-    BgpAttrDB *attr_db = server_->attr_db();
-    BgpAttrPtr attr = attr_db->Locate(msg->path_attributes);
+    BgpAttrPtr attr = server_->attr_db()->Locate(msg->path_attributes);
     // Check as path loop and neighbor-as 
     const BgpAttr *path_attr = attr.get(); 
     uint32_t flags = 0;
@@ -996,22 +995,15 @@ void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
             vector<BgpProtoPrefix *>::const_iterator it;
             for (it = nlri->nlri.begin(); it < nlri->nlri.end(); it++) {
                 EvpnPrefix prefix;
-                EthernetSegmentId esi;
+                BgpAttrPtr new_attr;
                 uint32_t label = 0;
-                int result = EvpnPrefix::FromProtoPrefix((**it), &prefix, &esi, &label);
+                int result = EvpnPrefix::FromProtoPrefix(server_, (**it), attr,
+                    &prefix, &new_attr, &label);
                 if (result) {
                     BGP_LOG_PEER(Message, this, SandeshLevel::SYS_WARN,
                         BGP_LOG_FLAG_ALL, BGP_PEER_DIR_IN,
                         "NLRI parse error for EVPN route type " << (*it)->type);
                     continue;
-                }
-
-                BgpAttrPtr new_attr;
-                if (prefix.type() == EvpnPrefix::MacAdvertisementRoute &&
-                    !esi.IsNull()) {
-                    new_attr = attr_db->ReplaceEsiAndLocate(attr.get(), esi);
-                } else {
-                    new_attr = attr;
                 }
 
                 DBRequest req;

@@ -319,7 +319,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
         EthernetSegmentId esi1 =
-            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+            EthernetSegmentId::FromString("00:01:02:03:04:05:06:07:08:09");
         attr.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
@@ -353,7 +353,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
         EthernetSegmentId esi1 =
-            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+            EthernetSegmentId::FromString("00:01:02:03:04:05:06:07:08:09");
         attr.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
@@ -387,7 +387,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
         EthernetSegmentId esi1 =
-            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+            EthernetSegmentId::FromString("00:01:02:03:04:05:06:07:08:09");
         attr.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);

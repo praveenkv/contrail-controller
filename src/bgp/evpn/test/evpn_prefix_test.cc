@@ -95,21 +95,24 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
         EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
         EXPECT_EQ(0, ec.value());
 
+        BgpAttr attr;
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
-        prefix1.BuildProtoPrefix(label1, &proto_prefix);
+        prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
         EXPECT_EQ(EvpnPrefix::min_auto_discovery_route_size * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_auto_discovery_route_size,
             proto_prefix.prefix.size());
 
-        uint32_t label2;
         EvpnPrefix prefix2;
+        EthernetSegmentId esi2;
+        uint32_t label2;
         EXPECT_EQ(0,
-            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-        EXPECT_EQ(label1, label2);
+            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_EQ(EthernetSegmentId::null_esi, esi2);
+        EXPECT_EQ(label1, label2);
     }
 }
 
@@ -312,21 +315,27 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
         EXPECT_EQ(0, ec.value());
 
+        BgpAttr attr;
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
-        prefix1.BuildProtoPrefix(label1, &proto_prefix);
+        EthernetSegmentId esi1 =
+            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+        attr.set_esi(esi1);
+        prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size,
             proto_prefix.prefix.size());
 
-        uint32_t label2;
         EvpnPrefix prefix2;
+        EthernetSegmentId esi2;
+        uint32_t label2;
         EXPECT_EQ(0,
-            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-        EXPECT_EQ(label1, label2);
+            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_EQ(esi1, esi2);
+        EXPECT_EQ(label1, label2);
     }
 }
 
@@ -340,21 +349,27 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
         EXPECT_EQ(0, ec.value());
 
+        BgpAttr attr;
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
-        prefix1.BuildProtoPrefix(label1, &proto_prefix);
+        EthernetSegmentId esi1 =
+            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+        attr.set_esi(esi1);
+        prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         EXPECT_EQ((EvpnPrefix::min_mac_advertisment_route_size + 4) * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size + 4,
             proto_prefix.prefix.size());
 
-        uint32_t label2;
         EvpnPrefix prefix2;
+        EthernetSegmentId esi2;
+        uint32_t label2;
         EXPECT_EQ(0,
-            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-        EXPECT_EQ(label1, label2);
+            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_EQ(esi1, esi2);
+        EXPECT_EQ(label1, label2);
     }
 }
 
@@ -368,21 +383,27 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
         EXPECT_EQ(0, ec.value());
 
+        BgpAttr attr;
         uint32_t label1 = 10000;
         BgpProtoPrefix proto_prefix;
-        prefix1.BuildProtoPrefix(label1, &proto_prefix);
+        EthernetSegmentId esi1 =
+            EthernetSegmentId("00:01:02:03:04:05:06:07:08:09");
+        attr.set_esi(esi1);
+        prefix1.BuildProtoPrefix(&attr, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         EXPECT_EQ((EvpnPrefix::min_mac_advertisment_route_size + 16) * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size + 16,
             proto_prefix.prefix.size());
 
-        uint32_t label2;
         EvpnPrefix prefix2;
+        EthernetSegmentId esi2;
+        uint32_t label2;
         EXPECT_EQ(0,
-            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-        EXPECT_EQ(label1, label2);
+            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_EQ(esi1, esi2);
+        EXPECT_EQ(label1, label2);
     }
 }
 
@@ -501,20 +522,23 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
         EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
         EXPECT_EQ(0, ec.value());
 
+        BgpAttr attr;
         BgpProtoPrefix proto_prefix;
-        prefix1.BuildProtoPrefix(0, &proto_prefix);
+        prefix1.BuildProtoPrefix(&attr, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, proto_prefix.type);
         EXPECT_EQ((EvpnPrefix::min_inclusive_multicast_route_size + 4) * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_inclusive_multicast_route_size + 4,
             proto_prefix.prefix.size());
 
-        uint32_t label2;
         EvpnPrefix prefix2;
+        EthernetSegmentId esi2;
+        uint32_t label2;
         EXPECT_EQ(0,
-            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-        EXPECT_EQ(0, label2);
+            EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_EQ(EthernetSegmentId::null_esi, esi2);
+        EXPECT_EQ(0, label2);
     }
 }
 
@@ -609,20 +633,23 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
     EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
     EXPECT_EQ(0, ec.value());
 
+    BgpAttr attr;
     BgpProtoPrefix proto_prefix;
-    prefix1.BuildProtoPrefix(0, &proto_prefix);
+    prefix1.BuildProtoPrefix(&attr, 0, &proto_prefix);
     EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
     EXPECT_EQ((EvpnPrefix::min_segment_route_size + 4) * 8,
         proto_prefix.prefixlen);
     EXPECT_EQ(EvpnPrefix::min_segment_route_size + 4,
         proto_prefix.prefix.size());
 
-    uint32_t label2;
     EvpnPrefix prefix2;
+    EthernetSegmentId esi2;
+    uint32_t label2;
     EXPECT_EQ(0,
-        EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &label2));
-    EXPECT_EQ(0, label2);
+        EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
     EXPECT_EQ(prefix1, prefix2);
+    EXPECT_EQ(EthernetSegmentId::null_esi, esi2);
+    EXPECT_EQ(0, label2);
 }
 
 // No dashes.

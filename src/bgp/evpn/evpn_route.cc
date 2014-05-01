@@ -84,7 +84,7 @@ EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
 }
 
 int EvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
-    EvpnPrefix *prefix, uint32_t *label) {
+    EvpnPrefix *prefix, EthernetSegmentId *esi, uint32_t *label) {
     *label = 0;
     prefix->type_ = proto_prefix.type;
     size_t nlri_size = proto_prefix.prefixlen / 8;
@@ -111,7 +111,7 @@ int EvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
         size_t esi_offset = rd_offset + rd_size;
-        prefix->esi_ = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
+        *esi = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
         size_t tag_offset = esi_offset + esi_size;
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
         size_t mac_len_offset = tag_offset + tag_size;
@@ -179,8 +179,15 @@ int EvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
     return 0;
 }
 
-void EvpnPrefix::BuildProtoPrefix(uint32_t label,
-        BgpProtoPrefix *proto_prefix) const {
+//
+// Build the BgpProtoPrefix for this EvpnPrefix.
+//
+// The ESI for MacAdvertisementRoute is not part of the key and hence
+// must be obtained from the BgpAttr.The BgpAttr is NULL and label is
+// 0 when withdrawing the route.
+//
+void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
+    BgpProtoPrefix *proto_prefix) const {
     proto_prefix->type = type_;
     proto_prefix->prefix.clear();
 
@@ -212,8 +219,10 @@ void EvpnPrefix::BuildProtoPrefix(uint32_t label,
         copy(rd_.GetData(), rd_.GetData() + rd_size,
             proto_prefix->prefix.begin() + rd_offset);
         size_t esi_offset = rd_offset + rd_size;
-        copy(esi_.GetData(), esi_.GetData() + esi_size,
-            proto_prefix->prefix.begin() + esi_offset);
+        if (attr) {
+            copy(attr->esi().GetData(), attr->esi().GetData() + esi_size,
+                proto_prefix->prefix.begin() + esi_offset);
+        }
         size_t tag_offset = esi_offset + esi_size;
         put_value(&proto_prefix->prefix[tag_offset], tag_size, tag_);
         size_t mac_len_offset = tag_offset + tag_size;
@@ -225,8 +234,10 @@ void EvpnPrefix::BuildProtoPrefix(uint32_t label,
         proto_prefix->prefix[ip_len_offset] = ip_size * 8;
         size_t ip_offset = ip_len_offset + 1;
         WriteIpAddress(proto_prefix, ip_offset);
-        size_t label_offset = ip_offset + ip_size;
-        WriteLabel(proto_prefix, label_offset, label);
+        if (label) {
+            size_t label_offset = ip_offset + ip_size;
+            WriteLabel(proto_prefix, label_offset, label);
+        }
         break;
     }
     case InclusiveMulticastRoute: {
@@ -265,6 +276,7 @@ void EvpnPrefix::BuildProtoPrefix(uint32_t label,
         break;
     }
     default: {
+        assert(false);
         break;
     }
     }
@@ -615,8 +627,8 @@ void EvpnRoute::SetKey(const DBRequestKey *reqkey) {
 }
 
 void EvpnRoute::BuildProtoPrefix(BgpProtoPrefix *proto_prefix,
-        uint32_t label) const {
-    prefix_.BuildProtoPrefix(label, proto_prefix);
+    const BgpAttr *attr, uint32_t label) const {
+    prefix_.BuildProtoPrefix(attr, label, proto_prefix);
 }
 
 void EvpnRoute::BuildBgpProtoNextHop(vector<uint8_t> &nh,

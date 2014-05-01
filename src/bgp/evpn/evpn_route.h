@@ -51,10 +51,11 @@ public:
     EvpnPrefix(const RouteDistinguisher &rd, const EthernetSegmentId &esi,
         const IpAddress &ip_address);
 
-    void BuildProtoPrefix(uint32_t label, BgpProtoPrefix *proto_prefix) const;
+    void BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
+        BgpProtoPrefix *proto_prefix) const;
 
     static int FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
-        EvpnPrefix *evpn_prefix, uint32_t *label);
+        EvpnPrefix *evpn_prefix, EthernetSegmentId *esi, uint32_t *label);
     static EvpnPrefix FromString(const std::string &str,
         boost::system::error_code *errorp = NULL);
     std::string ToString() const;
@@ -103,7 +104,7 @@ public:
     virtual void SetKey(const DBRequestKey *reqkey);
 
     virtual void BuildProtoPrefix(BgpProtoPrefix *proto_prefix,
-        uint32_t label) const;
+        const BgpAttr *attr = NULL, uint32_t label = 0) const;
     virtual void BuildBgpProtoNextHop(std::vector<uint8_t> &nh,
         IpAddress nexthop) const;
 

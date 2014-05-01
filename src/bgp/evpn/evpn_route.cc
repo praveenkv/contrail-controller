@@ -88,8 +88,8 @@ EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
 
 int EvpnPrefix::FromProtoPrefix(BgpServer *server,
     const BgpProtoPrefix &proto_prefix, const BgpAttr *attr,
-    EvpnPrefix *evpn_prefix, BgpAttrPtr *new_attr, uint32_t *label) {
-    *new_ptr = attr;
+    EvpnPrefix *prefix, BgpAttrPtr *new_attr, uint32_t *label) {
+    *new_attr = attr;
     *label = 0;
     prefix->type_ = proto_prefix.type;
     size_t nlri_size = proto_prefix.prefixlen / 8;

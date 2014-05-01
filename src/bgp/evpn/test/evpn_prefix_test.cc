@@ -118,14 +118,15 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
-        BgpAttrPtr attr2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(
-            bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
-        EXPECT_TRUE(attr2->esi().IsZero());
-        EXPECT_EQ(&attr1, attr2.get());
+        EXPECT_TRUE(attr_out2->esi().IsZero());
+        EXPECT_EQ(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(label1, label2);
     }
 }
@@ -343,15 +344,16 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
-        BgpAttrPtr attr2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(
-            bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
         EXPECT_TRUE(prefix2.esi().IsZero());
-        EXPECT_EQ(esi1, attr2->esi());
-        EXPECT_EQ(&attr1, attr2.get());
+        EXPECT_EQ(esi1, attr_out2->esi());
+        EXPECT_NE(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(label1, label2);
     }
 }
@@ -380,15 +382,16 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
-        BgpAttrPtr attr2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(
-            bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
         EXPECT_TRUE(prefix2.esi().IsZero());
-        EXPECT_EQ(esi1, attr2->esi());
-        EXPECT_EQ(&attr1, attr2.get());
+        EXPECT_EQ(esi1, attr_out2->esi());
+        EXPECT_NE(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(label1, label2);
     }
 }
@@ -417,15 +420,16 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
-        BgpAttrPtr attr2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(
-            bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
         EXPECT_TRUE(prefix2.esi().IsZero());
-        EXPECT_EQ(esi1, attr2->esi());
-        EXPECT_EQ(&attr1, attr2.get());
+        EXPECT_EQ(esi1, attr_out2->esi());
+        EXPECT_NE(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(label1, label2);
     }
 }
@@ -555,14 +559,15 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
-        BgpAttrPtr attr2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(
-            bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
-        EXPECT_TRUE(attr2->esi().IsZero());
-        EXPECT_EQ(&attr1, attr2.get());
+        EXPECT_TRUE(attr_out2->esi().IsZero());
+        EXPECT_EQ(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(0, label2);
     }
 }
@@ -668,14 +673,15 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
         proto_prefix.prefix.size());
 
     EvpnPrefix prefix2;
-    BgpAttrPtr attr2;
+    BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+    BgpAttrPtr attr_out2;
     uint32_t label2;
-    int result = EvpnPrefix::FromProtoPrefix(
-        bs_.get(), proto_prefix, &attr1, &prefix2, &attr2, &label2);
+    int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
     EXPECT_EQ(0, result);
     EXPECT_EQ(prefix1, prefix2);
-    EXPECT_TRUE(attr2->esi().IsZero());
-    EXPECT_EQ(&attr1, attr2.get());
+    EXPECT_TRUE(attr_out2->esi().IsZero());
+    EXPECT_EQ(attr_in2.get(), attr_out2.get());
     EXPECT_EQ(0, label2);
 }
 

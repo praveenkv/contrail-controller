@@ -997,8 +997,8 @@ void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
                 EvpnPrefix prefix;
                 BgpAttrPtr new_attr;
                 uint32_t label = 0;
-                int result = EvpnPrefix::FromProtoPrefix(server_, (**it), attr,
-                    &prefix, &new_attr, &label);
+                int result = EvpnPrefix::FromProtoPrefix(server_, (**it),
+                    attr.get(), &prefix, &new_attr, &label);
                 if (result) {
                     BGP_LOG_PEER(Message, this, SandeshLevel::SYS_WARN,
                         BGP_LOG_FLAG_ALL, BGP_PEER_DIR_IN,

@@ -5,6 +5,8 @@
 #include "bgp/evpn/evpn_route.h"
 #include "bgp/evpn/evpn_table.h"
 
+#include "bgp/bgp_server.h"
+
 using namespace std;
 
 const EvpnPrefix EvpnPrefix::null_prefix;
@@ -84,8 +86,10 @@ EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
     }
 }
 
-int EvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
-    EvpnPrefix *prefix, EthernetSegmentId *esi, uint32_t *label) {
+int EvpnPrefix::FromProtoPrefix(BgpServer *server,
+    const BgpProtoPrefix &proto_prefix, const BgpAttr *attr,
+    EvpnPrefix *evpn_prefix, BgpAttrPtr *new_attr, uint32_t *label) {
+    *new_ptr = attr;
     *label = 0;
     prefix->type_ = proto_prefix.type;
     size_t nlri_size = proto_prefix.prefixlen / 8;
@@ -112,7 +116,8 @@ int EvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
         size_t esi_offset = rd_offset + rd_size;
-        *esi = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
+        EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
+        *new_attr = server->attr_db()->ReplaceEsiAndLocate(attr, esi);
         size_t tag_offset = esi_offset + esi_size;
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
         size_t mac_len_offset = tag_offset + tag_size;

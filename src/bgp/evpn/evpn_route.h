@@ -15,6 +15,8 @@
 #include "net/mac_address.h"
 #include "net/rd.h"
 
+class BgpServer;
+
 class EvpnPrefix {
 public:
     static const EvpnPrefix null_prefix;
@@ -54,8 +56,9 @@ public:
     void BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
         BgpProtoPrefix *proto_prefix) const;
 
-    static int FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
-        EvpnPrefix *evpn_prefix, EthernetSegmentId *esi, uint32_t *label);
+    static int FromProtoPrefix(BgpServer *server,
+        const BgpProtoPrefix &proto_prefix, const BgpAttr *attr,
+        EvpnPrefix *evpn_prefix, BgpAttrPtr *new_attr, uint32_t *label);
     static EvpnPrefix FromString(const std::string &str,
         boost::system::error_code *errorp = NULL);
     std::string ToString() const;

@@ -334,6 +334,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         EXPECT_EQ(0,
             EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsNull());
         EXPECT_EQ(esi1, esi2);
         EXPECT_EQ(label1, label2);
     }
@@ -368,6 +369,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         EXPECT_EQ(0,
             EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsNull());
         EXPECT_EQ(esi1, esi2);
         EXPECT_EQ(label1, label2);
     }
@@ -402,6 +404,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         EXPECT_EQ(0,
             EvpnPrefix::FromProtoPrefix(proto_prefix, &prefix2, &esi2, &label2));
         EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsNull());
         EXPECT_EQ(esi1, esi2);
         EXPECT_EQ(label1, label2);
     }

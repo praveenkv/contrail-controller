@@ -8,6 +8,7 @@
 using namespace std;
 
 const EvpnPrefix EvpnPrefix::null_prefix;
+
 const uint32_t EvpnPrefix::null_tag = 0;
 const uint32_t EvpnPrefix::max_tag = 0xFFFFFFFF;
 

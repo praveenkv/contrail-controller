@@ -14,7 +14,7 @@ static uint8_t max_esi_bytes[] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-EthernetSegmentId EthernetSegmentId::null_esi;
+EthernetSegmentId EthernetSegmentId::zero_esi;
 EthernetSegmentId EthernetSegmentId::max_esi(max_esi_bytes);
 
 EthernetSegmentId::EthernetSegmentId() {
@@ -27,8 +27,8 @@ EthernetSegmentId::EthernetSegmentId(const uint8_t *data) {
 
 EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
     boost::system::error_code *errorp) {
-    if (str == "null_esi")
-        return EthernetSegmentId::null_esi;
+    if (str == "zero_esi")
+        return EthernetSegmentId::zero_esi;
     if (str == "max_esi")
         return EthernetSegmentId::max_esi;
 
@@ -117,8 +117,8 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
 }
 
 string EthernetSegmentId::ToString() const {
-    if (CompareTo(null_esi) == 0)
-        return "null_esi";
+    if (CompareTo(zero_esi) == 0)
+        return "zero_esi";
     if (CompareTo(max_esi) == 0)
         return "max_esi";
 

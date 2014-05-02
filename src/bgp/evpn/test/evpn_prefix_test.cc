@@ -59,6 +59,23 @@ TEST_F(EvpnPrefixTest, ParseType_Error4) {
     EXPECT_NE(0, ec.value());
 }
 
+TEST_F(EvpnPrefixTest, FromProtoPrefix_Error) {
+    BgpProtoPrefix proto_prefix;
+    for (uint16_t type = 0; type < 255; ++type) {
+        if (type >= EvpnPrefix::AutoDiscoveryRoute &&
+            type <= EvpnPrefix::SegmentRoute)
+            continue;
+        proto_prefix.type = type;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
 class EvpnAutoDiscoveryPrefixTest : public EvpnPrefixTest {
 };
 
@@ -641,7 +658,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
 class EvpnInclusiveMulticastPrefixTest : public EvpnPrefixTest {
 };
 
-TEST_F(EvpnInclusiveMulticastPrefixTest, BuildPrefix) {
+TEST_F(EvpnInclusiveMulticastPrefixTest, BuildPrefix1) {
     boost::system::error_code ec;
     RouteDistinguisher rd(RouteDistinguisher::FromString("10.1.1.1:65535"));
     Ip4Address ip4_addr = Ip4Address::from_string("192.1.1.1", ec);
@@ -661,7 +678,27 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, BuildPrefix) {
     }
 }
 
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix) {
+TEST_F(EvpnInclusiveMulticastPrefixTest, BuildPrefix2) {
+    boost::system::error_code ec;
+    RouteDistinguisher rd(RouteDistinguisher::FromString("10.1.1.1:65535"));
+    Ip6Address ip6_addr = Ip6Address::from_string("2001:db8:0:9::1", ec);
+
+    string temp1("3-10.1.1.1:65535-");
+    string temp2("-2001:db8:0:9::1");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        EvpnPrefix prefix(rd, tag, ip6_addr);
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        EXPECT_EQ(prefix_str, prefix.ToString());
+        EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, prefix.type());
+        EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
+        EXPECT_EQ(tag, prefix.tag());
+        EXPECT_EQ(Address::INET6, prefix.family());
+        EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
+    }
+}
+
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix1) {
     string temp1("3-10.1.1.1:65535-");
     string temp2("-192.1.1.1");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
@@ -676,6 +713,24 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix) {
         EXPECT_EQ(tag, prefix.tag());
         EXPECT_EQ(Address::INET, prefix.family());
         EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
+    }
+}
+
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix2) {
+    string temp1("3-10.1.1.1:65535-");
+    string temp2("-2001:db8:0:9::1");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        boost::system::error_code ec;
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+        EXPECT_EQ(prefix_str, prefix.ToString());
+        EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, prefix.type());
+        EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
+        EXPECT_EQ(tag, prefix.tag());
+        EXPECT_EQ(Address::INET6, prefix.family());
+        EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
     }
 }
 
@@ -727,7 +782,7 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error6) {
     EXPECT_NE(0, ec.value());
 }
 
-TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix1) {
     string temp1("3-10.1.1.1:65535-");
     string temp2("-192.1.1.1");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
@@ -744,6 +799,39 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
         EXPECT_EQ((EvpnPrefix::min_inclusive_multicast_route_size + 4) * 8,
             proto_prefix.prefixlen);
         EXPECT_EQ(EvpnPrefix::min_inclusive_multicast_route_size + 4,
+            proto_prefix.prefix.size());
+
+        EvpnPrefix prefix2;
+        BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out2;
+        uint32_t label2;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(attr_out2->esi().IsZero());
+        EXPECT_EQ(attr_in2.get(), attr_out2.get());
+        EXPECT_EQ(0, label2);
+    }
+}
+
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix2) {
+    string temp1("3-10.1.1.1:65535-");
+    string temp2("-2001:db8:0:9::1");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        boost::system::error_code ec;
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+
+        BgpAttr attr1;
+        BgpProtoPrefix proto_prefix;
+        prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
+        EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, proto_prefix.type);
+        EXPECT_EQ((EvpnPrefix::min_inclusive_multicast_route_size + 16) * 8,
+            proto_prefix.prefixlen);
+        EXPECT_EQ(EvpnPrefix::min_inclusive_multicast_route_size + 16,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -850,7 +938,7 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error4) {
 class EvpnSegmentPrefixTest : public EvpnPrefixTest {
 };
 
-TEST_F(EvpnSegmentPrefixTest, BuildPrefix) {
+TEST_F(EvpnSegmentPrefixTest, BuildPrefix1) {
     boost::system::error_code ec;
     RouteDistinguisher rd(RouteDistinguisher::FromString("10.1.1.1:65535"));
     EthernetSegmentId esi(
@@ -867,7 +955,24 @@ TEST_F(EvpnSegmentPrefixTest, BuildPrefix) {
     EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
 }
 
-TEST_F(EvpnSegmentPrefixTest, ParsePrefix) {
+TEST_F(EvpnSegmentPrefixTest, BuildPrefix2) {
+    boost::system::error_code ec;
+    RouteDistinguisher rd(RouteDistinguisher::FromString("10.1.1.1:65535"));
+    EthernetSegmentId esi(
+        EthernetSegmentId::FromString("00:01:02:03:04:05:06:07:08:09"));
+    Ip6Address ip6_addr = Ip6Address::from_string("2001:db8:0:9::1", ec);
+    EvpnPrefix prefix(rd, esi, ip4_addr);
+    EXPECT_EQ("4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-2001:db8:0:9::1",
+        prefix.ToString());
+    EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
+    EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
+    EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
+    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(Address::INET6, prefix.family());
+    EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
+}
+
+TEST_F(EvpnSegmentPrefixTest, ParsePrefix1) {
     boost::system::error_code ec;
     string prefix_str(
         "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-192.1.1.1");
@@ -881,6 +986,22 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix) {
     EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
     EXPECT_EQ(Address::INET, prefix.family());
     EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
+}
+
+TEST_F(EvpnSegmentPrefixTest, ParsePrefix2) {
+    boost::system::error_code ec;
+    string prefix_str(
+        "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-2001:db8:0:9::1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ("4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-2001:db8:0:9::1",
+        prefix.ToString());
+    EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
+    EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
+    EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
+    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(Address::INET6, prefix.family());
+    EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
 }
 
 // No dashes.
@@ -937,7 +1058,7 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix_Error6) {
     EXPECT_NE(0, ec.value());
 }
 
-TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix1) {
     boost::system::error_code ec;
     string prefix_str(
         "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-192.1.1.1");
@@ -951,6 +1072,35 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
     EXPECT_EQ((EvpnPrefix::min_segment_route_size + 4) * 8,
         proto_prefix.prefixlen);
     EXPECT_EQ(EvpnPrefix::min_segment_route_size + 4,
+        proto_prefix.prefix.size());
+
+    EvpnPrefix prefix2;
+    BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+    BgpAttrPtr attr_out2;
+    uint32_t label2;
+    int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(prefix1, prefix2);
+    EXPECT_TRUE(attr_out2->esi().IsZero());
+    EXPECT_EQ(attr_in2.get(), attr_out2.get());
+    EXPECT_EQ(0, label2);
+}
+
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix2) {
+    boost::system::error_code ec;
+    string prefix_str(
+        "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-2001:db8:0:9::1");
+    EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_EQ(0, ec.value());
+
+    BgpAttr attr1;
+    BgpProtoPrefix proto_prefix;
+    prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
+    EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
+    EXPECT_EQ((EvpnPrefix::min_segment_route_size + 16) * 8,
+        proto_prefix.prefixlen);
+    EXPECT_EQ(EvpnPrefix::min_segment_route_size + 16,
         proto_prefix.prefix.size());
 
     EvpnPrefix prefix2;

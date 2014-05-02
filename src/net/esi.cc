@@ -30,7 +30,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
     if (str == "zero_esi")
         return EthernetSegmentId::kZeroEsi;
     if (str == "max_esi")
-        return EthernetSegmentId::max_esi;
+        return EthernetSegmentId::kMaxEsi;
 
     size_t num_colons = count(str.begin(), str.end(), ':');
     if (num_colons != 1 && num_colons != 9) {

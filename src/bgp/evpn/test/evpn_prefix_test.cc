@@ -179,18 +179,25 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
     }
 }
 
-TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error1) {
+// Smaller than minimum size.
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
     size_t nlri_size = EvpnPrefix::min_auto_discovery_route_size;
-    proto_prefix.prefix.resize(nlri_size - 1, 0);
-    EvpnPrefix prefix;
-    BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
-    BgpAttrPtr attr_out;
-    uint32_t label;
-    int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
-        proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
-    EXPECT_NE(0, result);
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::min_auto_discovery_route_size;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
 class EvpnMacAdvertisementPrefixTest : public EvpnPrefixTest {
@@ -334,6 +341,70 @@ TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix3) {
     }
 }
 
+// No dashes.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error1) {
+    boost::system::error_code ec;
+    string prefix_str("2+10.1.1.1:65535+65536+11:12:13:14:15:16,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// No dashes after type delimiter.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error2) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535+65536+11:12:13:14:15:16,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad RD.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error3) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65536-65536-11:12:13:14:15:16,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// No dashes after RD delimiter.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error4) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535-65536+11:12:13:14:15:16,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad tag.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error5) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535-65536x-11:12:13:14:15:16,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// No comma.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error6) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535-65536-11:12:13:14:15:16+192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad MAC.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error7) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535-0-11:12:13:14:15,192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad IP address.
+TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error8) {
+    boost::system::error_code ec;
+    string prefix_str("2-10.1.1.1:65535-0-11:12:13:14:15:16,192.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,0.0.0.0");
@@ -448,68 +519,123 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
     }
 }
 
-// No dashes.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error1) {
-    boost::system::error_code ec;
-    string prefix_str("2+10.1.1.1:65535+65536+11:12:13:14:15:16,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
+// Smaller than minimum size.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::min_mac_advertisment_route_size;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
-// No dashes after type delimiter.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error2) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535+65536+11:12:13:14:15:16,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
+// Bad MAC Address length.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error2) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
+        EvpnPrefix::tag_size;
+
+    for (uint16_t mac_len = 0; mac_len <= 255; ++mac_len) {
+        if (mac_len == 48)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[mac_len_offset] = mac_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
-// Bad RD.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error3) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65536-65536-11:12:13:14:15:16,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
+// Bad IP Address length.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
+        EvpnPrefix::tag_size;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
+
+    proto_prefix.prefix[mac_len_offset] = 48;
+    for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
+        if (ip_len == 0 || ip_len == 32 || ip_len == 128)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[ip_len_offset] = ip_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
-// No dashes after RD delimiter.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error4) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535-65536+11:12:13:14:15:16,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
+// Smaller than minimum size for ipv4 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
+        EvpnPrefix::tag_size;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
+
+    for (size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+         nlri_size < EvpnPrefix::min_mac_advertisment_route_size + 4;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[mac_len_offset] = 48;
+        proto_prefix.prefix[ip_len_offset] = 32;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
-// Bad tag.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error5) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535-65536x-11:12:13:14:15:16,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
+// Smaller than minimum size for ipv6 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
+        EvpnPrefix::tag_size;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
 
-// No comma.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error6) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535-65536-11:12:13:14:15:16+192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// Bad MAC.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error7) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535-0-11:12:13:14:15,192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// Bad IP address.
-TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error8) {
-    boost::system::error_code ec;
-    string prefix_str("2-10.1.1.1:65535-0-11:12:13:14:15:16,192.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
+    for (size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+         nlri_size < EvpnPrefix::min_mac_advertisment_route_size + 16;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[mac_len_offset] = 48;
+        proto_prefix.prefix[ip_len_offset] = 128;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
 class EvpnInclusiveMulticastPrefixTest : public EvpnPrefixTest {
@@ -551,6 +677,54 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix) {
         EXPECT_EQ(Address::INET, prefix.family());
         EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
     }
+}
+
+// No dashes.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error1) {
+    boost::system::error_code ec;
+    string prefix_str("3+10.1.1.1:65535+65536+192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// No dashes after type delimiter.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error2) {
+    boost::system::error_code ec;
+    string prefix_str("3-10.1.1.1:65535+65536+192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad RD.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error3) {
+    boost::system::error_code ec;
+    string prefix_str("3-10.1.1.1:65536-65536-192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// No dashes after RD delimiter.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error4) {
+    boost::system::error_code ec;
+    string prefix_str("3-10.1.1.1:65535-65536+192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad tag.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error5) {
+    boost::system::error_code ec;
+    string prefix_str("3-10.1.1.1:65535-65536x-192.1.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
+}
+
+// Bad IP address.
+TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error6) {
+    boost::system::error_code ec;
+    string prefix_str("3-10.1.1.1:65535-65536-192.1.1");
+    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_NE(0, ec.value());
 }
 
 TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
@@ -673,54 +847,6 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error4) {
     }
 }
 
-// No dashes.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error1) {
-    boost::system::error_code ec;
-    string prefix_str("3+10.1.1.1:65535+65536+192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// No dashes after type delimiter.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error2) {
-    boost::system::error_code ec;
-    string prefix_str("3-10.1.1.1:65535+65536+192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// Bad RD.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error3) {
-    boost::system::error_code ec;
-    string prefix_str("3-10.1.1.1:65536-65536-192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// No dashes after RD delimiter.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error4) {
-    boost::system::error_code ec;
-    string prefix_str("3-10.1.1.1:65535-65536+192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// Bad tag.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error5) {
-    boost::system::error_code ec;
-    string prefix_str("3-10.1.1.1:65535-65536x-192.1.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
-// Bad IP address.
-TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error6) {
-    boost::system::error_code ec;
-    string prefix_str("3-10.1.1.1:65535-65536-192.1.1");
-    EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_NE(0, ec.value());
-}
-
 class EvpnSegmentPrefixTest : public EvpnPrefixTest {
 };
 
@@ -755,35 +881,6 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix) {
     EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
     EXPECT_EQ(Address::INET, prefix.family());
     EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
-}
-
-TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
-    boost::system::error_code ec;
-    string prefix_str(
-        "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-192.1.1.1");
-    EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
-    EXPECT_EQ(0, ec.value());
-
-    BgpAttr attr1;
-    BgpProtoPrefix proto_prefix;
-    prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
-    EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
-    EXPECT_EQ((EvpnPrefix::min_segment_route_size + 4) * 8,
-        proto_prefix.prefixlen);
-    EXPECT_EQ(EvpnPrefix::min_segment_route_size + 4,
-        proto_prefix.prefix.size());
-
-    EvpnPrefix prefix2;
-    BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
-    BgpAttrPtr attr_out2;
-    uint32_t label2;
-    int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
-        proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
-    EXPECT_EQ(0, result);
-    EXPECT_EQ(prefix1, prefix2);
-    EXPECT_TRUE(attr_out2->esi().IsZero());
-    EXPECT_EQ(attr_in2.get(), attr_out2.get());
-    EXPECT_EQ(0, label2);
 }
 
 // No dashes.
@@ -838,6 +935,122 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix_Error6) {
         "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-192.1.1");
     EvpnPrefix prefix(EvpnPrefix::FromString(prefix_str, &ec));
     EXPECT_NE(0, ec.value());
+}
+
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix) {
+    boost::system::error_code ec;
+    string prefix_str(
+        "4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-192.1.1.1");
+    EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+    EXPECT_EQ(0, ec.value());
+
+    BgpAttr attr1;
+    BgpProtoPrefix proto_prefix;
+    prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
+    EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
+    EXPECT_EQ((EvpnPrefix::min_segment_route_size + 4) * 8,
+        proto_prefix.prefixlen);
+    EXPECT_EQ(EvpnPrefix::min_segment_route_size + 4,
+        proto_prefix.prefix.size());
+
+    EvpnPrefix prefix2;
+    BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
+    BgpAttrPtr attr_out2;
+    uint32_t label2;
+    int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(prefix1, prefix2);
+    EXPECT_TRUE(attr_out2->esi().IsZero());
+    EXPECT_EQ(attr_in2.get(), attr_out2.get());
+    EXPECT_EQ(0, label2);
+}
+
+// Smaller than minimum size.
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error1) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::SegmentRoute;
+    size_t nlri_size = EvpnPrefix::min_segment_route_size;
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::min_segment_route_size;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Bad IP Address length.
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error2) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::SegmentRoute;
+    size_t nlri_size = EvpnPrefix::min_segment_route_size;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+
+    for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
+        if (ip_len == 32 || ip_len == 128)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[ip_len_offset] = ip_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum size for ipv4 address.
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error3) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::SegmentRoute;
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+
+    for (size_t nlri_size = EvpnPrefix::min_segment_route_size;
+         nlri_size < EvpnPrefix::min_segment_route_size + 4;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[ip_len_offset] = 32;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum size for ipv6 address.
+TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error4) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::SegmentRoute;
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+
+    for (size_t nlri_size = EvpnPrefix::min_segment_route_size;
+         nlri_size < EvpnPrefix::min_segment_route_size + 16;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[ip_len_offset] = 128;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
 }
 
 int main(int argc, char **argv) {

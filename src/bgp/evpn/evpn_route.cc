@@ -114,8 +114,10 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
         size_t esi_offset = rd_offset + kRdSize;
-        EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
-        *new_attr = server->attr_db()->ReplaceEsiAndLocate(attr, esi);
+        if (attr) {
+            EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
+            *new_attr = server->attr_db()->ReplaceEsiAndLocate(attr, esi);
+        }
         size_t tag_offset = esi_offset + kEsiSize;
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], kTagSize);
         size_t mac_len_offset = tag_offset + kTagSize;

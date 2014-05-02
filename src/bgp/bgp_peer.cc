@@ -874,16 +874,6 @@ void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
         }
     }
 
-    // Retrieve label range from multicast edge discovery attribute.
-#ifdef TODO
-    if (path_attr->multicast_edge_discovery()) {
-        LabelBlockPtr lbptr = lb_mgr_->LocateBlock(
-                path_attr->multicast_edge_discovery().getLabelLow(),
-                path_attr->multicast_edge_discovery().getLabelHigh());
-        attr = server_->attr_db()->LocateAndReplaceLabelRange(lbptr);
-    }
-#endif
-
     RoutingInstance *instance = GetRoutingInstance();
     if (msg->nlri.size() || msg->withdrawn_routes.size()) {
         InetTable *table =
@@ -998,7 +988,8 @@ void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
                 BgpAttrPtr new_attr;
                 uint32_t label = 0;
                 int result = EvpnPrefix::FromProtoPrefix(server_, (**it),
-                    attr.get(), &prefix, &new_attr, &label);
+                    (oper == DBRequest::DB_ENTRY_ADD_CHANGE) ? path_attr : NULL,
+                    &prefix, &new_attr, &label);
                 if (result) {
                     BGP_LOG_PEER(Message, this, SandeshLevel::SYS_WARN,
                         BGP_LOG_FLAG_ALL, BGP_PEER_DIR_IN,

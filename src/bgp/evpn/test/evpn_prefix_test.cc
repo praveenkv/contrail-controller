@@ -536,6 +536,108 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
     }
 }
 
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
+    string temp1("2-10.1.1.1:65535-");
+    string temp2("-11:12:13:14:15:16,0.0.0.0");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        boost::system::error_code ec;
+        EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+
+        BgpProtoPrefix proto_prefix;
+        prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
+        EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize * 8,
+            proto_prefix.prefixlen);
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize,
+            proto_prefix.prefix.size());
+        size_t esi_offset = EvpnPrefix::kRdSize;
+        EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
+        EXPECT_TRUE(esi.IsZero());
+
+        EvpnPrefix prefix2;
+        BgpAttrPtr attr_out2;
+        uint32_t label2;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+    }
+}
+
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
+    string temp1("2-10.1.1.1:65535-");
+    string temp2("-11:12:13:14:15:16,192.1.1.1");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        boost::system::error_code ec;
+        EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+
+        BgpProtoPrefix proto_prefix;
+        prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
+        EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
+        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 4) * 8,
+            proto_prefix.prefixlen);
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 4,
+            proto_prefix.prefix.size());
+        size_t esi_offset = EvpnPrefix::kRdSize;
+        EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
+        EXPECT_TRUE(esi.IsZero());
+
+        EvpnPrefix prefix2;
+        BgpAttrPtr attr_out2;
+        uint32_t label2;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+    }
+}
+
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
+    string temp1("2-10.1.1.1:65535-");
+    string temp2("-11:12:13:14:15:16,2001:db8:0:9::1");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        string prefix_str = temp1 + integerToString(tag) + temp2;
+        boost::system::error_code ec;
+        EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+
+        BgpProtoPrefix proto_prefix;
+        prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
+        EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
+        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 16) * 8,
+            proto_prefix.prefixlen);
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 16,
+            proto_prefix.prefix.size());
+        size_t esi_offset = EvpnPrefix::kRdSize;
+        EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
+        EXPECT_TRUE(esi.IsZero());
+
+        EvpnPrefix prefix2;
+        BgpAttrPtr attr_out2;
+        uint32_t label2;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+    }
+}
+
 // Smaller than minimum size.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;

@@ -961,7 +961,7 @@ TEST_F(EvpnSegmentPrefixTest, BuildPrefix2) {
     EthernetSegmentId esi(
         EthernetSegmentId::FromString("00:01:02:03:04:05:06:07:08:09"));
     Ip6Address ip6_addr = Ip6Address::from_string("2001:db8:0:9::1", ec);
-    EvpnPrefix prefix(rd, esi, ip4_addr);
+    EvpnPrefix prefix(rd, esi, ip6_addr);
     EXPECT_EQ("4-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-2001:db8:0:9::1",
         prefix.ToString());
     EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());

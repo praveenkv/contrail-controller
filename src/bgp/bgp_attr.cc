@@ -6,22 +6,6 @@
 #include "base/util.h"
 #include "bgp/bgp_proto.h"
 
-BgpProtoPrefix::BgpProtoPrefix() : prefixlen(0), type(0) {
-}
-
-int BgpAttribute::CompareTo(const BgpAttribute &rhs) const {
-    KEY_COMPARE(code, rhs.code);
-    KEY_COMPARE(subcode, rhs.subcode);
-    KEY_COMPARE(flags, rhs.flags);
-    return 0;
-}
-
-std::string BgpAttribute::ToString() const {
-    char repr[80];
-    snprintf(repr, sizeof(repr), "<code: %d, flags: %02x>", code, flags);
-    return std::string(repr);
-}
-
 int BgpAttrOrigin::CompareTo(const BgpAttribute &rhs_attr) const {
     int ret = BgpAttribute::CompareTo(rhs_attr);
     if (ret != 0) return ret;

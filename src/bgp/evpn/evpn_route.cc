@@ -18,7 +18,7 @@ const size_t EvpnPrefix::rd_size = RouteDistinguisher::kSize;
 const size_t EvpnPrefix::esi_size = EthernetSegmentId::kSize;
 const size_t EvpnPrefix::tag_size = 4;
 const size_t EvpnPrefix::mac_size = MacAddress::kSize;
-const size_t EvpnPrefix::label_size = 3;
+const size_t EvpnPrefix::label_size = BgpProtoPrefix::kLabelSize;
 
 const size_t EvpnPrefix::min_auto_discovery_route_size =
     rd_size + esi_size + tag_size + label_size;
@@ -105,7 +105,7 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         size_t tag_offset = esi_offset + esi_size;
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
         size_t label_offset = tag_offset + tag_size;
-        *label = prefix->ReadLabel(proto_prefix, label_offset);
+        *label = proto_prefix.ReadLabel(label_offset);
         break;
     }
     case MacAdvertisementRoute: {
@@ -134,7 +134,7 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
         size_t label_offset = ip_offset + ip_size;
-        *label = prefix->ReadLabel(proto_prefix, label_offset);
+        *label = proto_prefix.ReadLabel(label_offset);
         break;
     }
     case InclusiveMulticastRoute: {
@@ -208,7 +208,7 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
         size_t tag_offset = esi_offset + esi_size;
         put_value(&proto_prefix->prefix[tag_offset], tag_size, tag_);
         size_t label_offset = tag_offset + tag_size;
-        WriteLabel(proto_prefix, label_offset, label);
+        proto_prefix->WriteLabel(label_offset, label);
         break;
     }
     case MacAdvertisementRoute: {
@@ -236,10 +236,8 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
         proto_prefix->prefix[ip_len_offset] = ip_size * 8;
         size_t ip_offset = ip_len_offset + 1;
         WriteIpAddress(proto_prefix, ip_offset);
-        if (label) {
-            size_t label_offset = ip_offset + ip_size;
-            WriteLabel(proto_prefix, label_offset, label);
-        }
+        size_t label_offset = ip_offset + ip_size;
+        proto_prefix->WriteLabel(label_offset, label);
         break;
     }
     case InclusiveMulticastRoute: {
@@ -548,25 +546,6 @@ string EvpnPrefix::ToString() const {
     }
 
     return str;
-}
-
-uint32_t EvpnPrefix::ReadLabel(const BgpProtoPrefix &proto_prefix,
-    size_t label_offset) {
-    uint32_t label = (proto_prefix.prefix[label_offset] << 16 |
-        proto_prefix.prefix[label_offset + 1] << 8 |
-        proto_prefix.prefix[label_offset + 2]) >> 4;
-    return label;
-}
-
-void EvpnPrefix::WriteLabel(BgpProtoPrefix *proto_prefix,
-    size_t label_offset, uint32_t label) {
-    assert(label <= 0xFFFFF);
-    uint32_t tmp = (label << 4 | 0x1);
-    uint8_t *data = &proto_prefix->prefix[label_offset];
-    for (size_t idx = 0; idx < label_size; ++idx) {
-        int offset = (label_size - (idx + 1)) * 8;
-        data[idx] = ((tmp >> offset) & 0xff);
-    }
 }
 
 size_t EvpnPrefix::GetIpAddressSize() const {

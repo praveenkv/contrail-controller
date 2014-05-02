@@ -84,11 +84,6 @@ private:
     Address::Family family_;
     IpAddress ip_address_;
 
-    static uint32_t ReadLabel(const BgpProtoPrefix &proto_prefix,
-        size_t label_offset);
-    static void WriteLabel(BgpProtoPrefix *proto_prefix,
-        size_t label_offset, uint32_t label);
-
     size_t GetIpAddressSize() const;
     void ReadIpAddress(const BgpProtoPrefix &proto_prefix,
         size_t ip_size, size_t ip_offset);

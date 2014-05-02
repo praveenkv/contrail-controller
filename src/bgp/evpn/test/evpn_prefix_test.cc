@@ -586,6 +586,93 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix) {
     }
 }
 
+// Smaller than minimum size.
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error1) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
+    size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Bad IP Address length.
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error2) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
+    size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+
+    for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
+        if (ip_len == 32 || ip_len == 128)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[ip_len_offset] = ip_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum size for ipv4 address.
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error3) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+
+    for (size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size + 4;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[ip_len_offset] = 32;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum size for ipv6 address.
+TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error4) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
+    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+
+    for (size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size + 16;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[ip_len_offset] = 128;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
 // No dashes.
 TEST_F(EvpnInclusiveMulticastPrefixTest, ParsePrefix_Error1) {
     boost::system::error_code ec;

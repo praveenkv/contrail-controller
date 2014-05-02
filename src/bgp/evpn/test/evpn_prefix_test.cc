@@ -231,7 +231,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, BuildPrefix1) {
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
     BOOST_FOREACH(uint32_t tag, tag_list) {
         EvpnPrefix prefix;
-        if (tag == EvpnPrefix::null_tag) {
+        if (tag == EvpnPrefix::kNullTag) {
             prefix = EvpnPrefix(rd, mac_addr, ip4_addr);
         } else {
             prefix = EvpnPrefix(rd, tag, mac_addr, ip4_addr);
@@ -258,7 +258,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, BuildPrefix2) {
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
     BOOST_FOREACH(uint32_t tag, tag_list) {
         EvpnPrefix prefix;
-        if (tag == EvpnPrefix::null_tag) {
+        if (tag == EvpnPrefix::kNullTag) {
             prefix = EvpnPrefix(rd, mac_addr, ip4_addr);
         } else {
             prefix = EvpnPrefix(rd, tag, mac_addr, ip4_addr);
@@ -285,7 +285,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, BuildPrefix3) {
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536 };
     BOOST_FOREACH(uint32_t tag, tag_list) {
         EvpnPrefix prefix;
-        if (tag == EvpnPrefix::null_tag) {
+        if (tag == EvpnPrefix::kNullTag) {
             prefix = EvpnPrefix(rd, mac_addr, ip6_addr);
         } else {
             prefix = EvpnPrefix(rd, tag, mac_addr, ip6_addr);
@@ -950,7 +950,7 @@ TEST_F(EvpnSegmentPrefixTest, BuildPrefix1) {
     EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
     EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
     EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
-    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(EvpnPrefix::kNullTag, prefix.tag());
     EXPECT_EQ(Address::INET, prefix.family());
     EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
 }
@@ -967,7 +967,7 @@ TEST_F(EvpnSegmentPrefixTest, BuildPrefix2) {
     EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
     EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
     EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
-    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(EvpnPrefix::kNullTag, prefix.tag());
     EXPECT_EQ(Address::INET6, prefix.family());
     EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
 }
@@ -983,7 +983,7 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix1) {
     EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
     EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
     EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
-    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(EvpnPrefix::kNullTag, prefix.tag());
     EXPECT_EQ(Address::INET, prefix.family());
     EXPECT_EQ("192.1.1.1", prefix.ip_address().to_string());
 }
@@ -999,7 +999,7 @@ TEST_F(EvpnSegmentPrefixTest, ParsePrefix2) {
     EXPECT_EQ(EvpnPrefix::SegmentRoute, prefix.type());
     EXPECT_EQ("10.1.1.1:65535", prefix.route_distinguisher().ToString());
     EXPECT_EQ("00:01:02:03:04:05:06:07:08:09", prefix.esi().ToString());
-    EXPECT_EQ(EvpnPrefix::null_tag, prefix.tag());
+    EXPECT_EQ(EvpnPrefix::kNullTag, prefix.tag());
     EXPECT_EQ(Address::INET6, prefix.family());
     EXPECT_EQ("2001:db8:0:9::1", prefix.ip_address().to_string());
 }

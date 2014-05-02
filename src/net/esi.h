@@ -10,8 +10,8 @@
 class EthernetSegmentId {
 public:
     static const int kSize = 10;
-    static EthernetSegmentId zero_esi;
-    static EthernetSegmentId max_esi;
+    static EthernetSegmentId kZeroEsi;
+    static EthernetSegmentId kMaxEsi;
 
     enum EsiType {
         CONFIGURED = 0,
@@ -28,7 +28,7 @@ public:
     EthernetSegmentId();
     EthernetSegmentId(const uint8_t *data);
 
-    bool IsZero() { return CompareTo(EthernetSegmentId::zero_esi) == 0; }
+    bool IsZero() { return CompareTo(EthernetSegmentId::kZeroEsi) == 0; }
     uint8_t Type() const { return data_[0]; }
 
     int CompareTo(const EthernetSegmentId &rhs) const;

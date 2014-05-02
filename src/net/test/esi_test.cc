@@ -13,7 +13,7 @@ class EthernetSegmentIdTest : public ::testing::Test {
 };
 
 TEST_F(EthernetSegmentIdTest, NullEsi) {
-    EthernetSegmentId esi = EthernetSegmentId::zero_esi;
+    EthernetSegmentId esi = EthernetSegmentId::kZeroEsi;
     EXPECT_TRUE(esi.IsZero());
     EXPECT_EQ(0, esi.Type());
     EXPECT_EQ("zero_esi", esi.ToString());
@@ -30,7 +30,7 @@ TEST_F(EthernetSegmentIdTest, FromStringNullEsi) {
 }
 
 TEST_F(EthernetSegmentIdTest, MaxEsi) {
-    EthernetSegmentId esi = EthernetSegmentId::max_esi;
+    EthernetSegmentId esi = EthernetSegmentId::kMaxEsi;
     EXPECT_FALSE(esi.IsZero());
     EXPECT_EQ(0xFF, esi.Type());
     EXPECT_EQ("max_esi", esi.ToString());
@@ -244,7 +244,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error1) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Wrong number of colons, 10 instead of 9.
@@ -253,7 +253,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error2) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Trailing garbage.
@@ -262,7 +262,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error3) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Trailing garbage.
@@ -271,7 +271,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error4) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Bad digits.
@@ -280,7 +280,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error5) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Wrong number of dots.
@@ -289,7 +289,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error6) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Bad IP address.
@@ -298,7 +298,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error7) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Bad discriminator for IP based.
@@ -307,7 +307,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error8) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Bad ASN.
@@ -316,7 +316,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error9) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 // Bad discriminator for ASN based.
@@ -325,7 +325,7 @@ TEST_F(EthernetSegmentIdTest, FromString_Error10) {
     boost::system::error_code ec;
     EthernetSegmentId esi = EthernetSegmentId::FromString(esi_str, &ec);
     EXPECT_NE(0, ec.value());
-    EXPECT_EQ(EthernetSegmentId::max_esi, esi);
+    EXPECT_EQ(EthernetSegmentId::kMaxEsi, esi);
 }
 
 int main(int argc, char **argv) {

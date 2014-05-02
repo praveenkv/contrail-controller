@@ -14,8 +14,8 @@ static uint8_t max_esi_bytes[] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-EthernetSegmentId EthernetSegmentId::zero_esi;
-EthernetSegmentId EthernetSegmentId::max_esi(max_esi_bytes);
+EthernetSegmentId EthernetSegmentId::kZeroEsi;
+EthernetSegmentId EthernetSegmentId::kMaxEsi(max_esi_bytes);
 
 EthernetSegmentId::EthernetSegmentId() {
     memset(data_, 0, kSize);
@@ -28,7 +28,7 @@ EthernetSegmentId::EthernetSegmentId(const uint8_t *data) {
 EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
     boost::system::error_code *errorp) {
     if (str == "zero_esi")
-        return EthernetSegmentId::zero_esi;
+        return EthernetSegmentId::kZeroEsi;
     if (str == "max_esi")
         return EthernetSegmentId::max_esi;
 
@@ -36,7 +36,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
     if (num_colons != 1 && num_colons != 9) {
         if (errorp != NULL)
             *errorp = make_error_code(boost::system::errc::invalid_argument);
-        return EthernetSegmentId::max_esi;
+        return EthernetSegmentId::kMaxEsi;
     }
 
     uint8_t data[kSize];
@@ -52,7 +52,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
         if (num_dots != 0 && num_dots != 3) {
             if (errorp != NULL)
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
-            return EthernetSegmentId::max_esi;
+            return EthernetSegmentId::kMaxEsi;
         }
 
         // AS based.
@@ -62,7 +62,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
             if (!ret) {
                 if (errorp != NULL) {
                     *errorp = make_error_code(boost::system::errc::invalid_argument);
-                    return EthernetSegmentId::max_esi;
+                    return EthernetSegmentId::kMaxEsi;
                 }
             }
 
@@ -77,7 +77,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
             if (ec.value() != 0) {
                 if (errorp != NULL) {
                     *errorp = make_error_code(boost::system::errc::invalid_argument);
-                    return EthernetSegmentId::max_esi;
+                    return EthernetSegmentId::kMaxEsi;
                 }
             }
 
@@ -93,7 +93,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
         if (!ret) {
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
-                return EthernetSegmentId::max_esi;
+                return EthernetSegmentId::kMaxEsi;
             }
         }
         put_value(&data[5], 4, disc);
@@ -109,7 +109,7 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
         if (ret != kSize || strchr(str.c_str(), 'x') || strchr(str.c_str(), 'X')) {
             if (errorp != NULL)
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
-            return EthernetSegmentId::max_esi;
+            return EthernetSegmentId::kMaxEsi;
         }
     }
 
@@ -117,9 +117,9 @@ EthernetSegmentId EthernetSegmentId::FromString(const std::string &str,
 }
 
 string EthernetSegmentId::ToString() const {
-    if (CompareTo(zero_esi) == 0)
+    if (CompareTo(kZeroEsi) == 0)
         return "zero_esi";
-    if (CompareTo(max_esi) == 0)
+    if (CompareTo(kMaxEsi) == 0)
         return "max_esi";
 
     switch (Type()) {

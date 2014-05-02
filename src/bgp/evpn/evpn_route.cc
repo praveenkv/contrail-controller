@@ -9,10 +9,10 @@
 
 using namespace std;
 
-const EvpnPrefix EvpnPrefix::null_prefix;
+const EvpnPrefix EvpnPrefix::kNullPrefix;
 
-const uint32_t EvpnPrefix::null_tag = 0;
-const uint32_t EvpnPrefix::max_tag = 0xFFFFFFFF;
+const uint32_t EvpnPrefix::kNullTag = 0;
+const uint32_t EvpnPrefix::kMaxTag = 0xFFFFFFFF;
 
 const size_t EvpnPrefix::kRdSize = RouteDistinguisher::kSize;
 const size_t EvpnPrefix::kEsiSize = EthernetSegmentId::kSize;
@@ -30,7 +30,7 @@ const size_t EvpnPrefix::kMinSegmentRouteSize =
     kRdSize + kEsiSize + 1;
 
 EvpnPrefix::EvpnPrefix()
-    : type_(Unspecified), tag_(EvpnPrefix::null_tag), family_(Address::UNSPEC) {
+    : type_(Unspecified), tag_(EvpnPrefix::kNullTag), family_(Address::UNSPEC) {
 }
 
 EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
@@ -42,7 +42,7 @@ EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
 EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
     const MacAddress &mac_addr, const IpAddress &ip_address)
     : type_(MacAdvertisementRoute),
-      rd_(rd), tag_(EvpnPrefix::null_tag),
+      rd_(rd), tag_(EvpnPrefix::kNullTag),
       mac_addr_(mac_addr), family_(Address::UNSPEC), ip_address_(ip_address) {
     if (ip_address_.is_v4() && !ip_address_.is_unspecified()) {
         family_ = Address::INET;
@@ -77,7 +77,7 @@ EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd, uint32_t tag,
 EvpnPrefix::EvpnPrefix(const RouteDistinguisher &rd,
     const EthernetSegmentId &esi, const IpAddress &ip_address)
     : type_(SegmentRoute),
-      rd_(rd), esi_(esi), tag_(EvpnPrefix::null_tag),
+      rd_(rd), esi_(esi), tag_(EvpnPrefix::kNullTag),
       family_(Address::UNSPEC), ip_address_(ip_address) {
     if (ip_address_.is_v4() && !ip_address_.is_unspecified()) {
         family_ = Address::INET;
@@ -324,7 +324,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
         if (errorp != NULL) {
             *errorp = make_error_code(boost::system::errc::invalid_argument);
         }
-        return EvpnPrefix::null_prefix;
+        return EvpnPrefix::kNullPrefix;
     }
 
     string type_str = str.substr(0, pos1);
@@ -333,7 +333,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
         if (errorp != NULL) {
             *errorp = make_error_code(boost::system::errc::invalid_argument);
         }
-        return EvpnPrefix::null_prefix;
+        return EvpnPrefix::kNullPrefix;
     }
 
     if (prefix.type_ < EvpnPrefix::AutoDiscoveryRoute ||
@@ -341,7 +341,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
         if (errorp != NULL) {
             *errorp = make_error_code(boost::system::errc::invalid_argument);
         }
-        return EvpnPrefix::null_prefix;
+        return EvpnPrefix::kNullPrefix;
     }
 
     // Parse RD.
@@ -350,7 +350,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
         if (errorp != NULL) {
             *errorp = make_error_code(boost::system::errc::invalid_argument);
         }
-        return EvpnPrefix::null_prefix;
+        return EvpnPrefix::kNullPrefix;
     }
     string rd_str = str.substr(pos1 + 1, pos2 - pos1 - 1);
     boost::system::error_code rd_err;
@@ -359,7 +359,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
         if (errorp != NULL) {
             *errorp = rd_err;
         }
-        return EvpnPrefix::null_prefix;
+        return EvpnPrefix::kNullPrefix;
     }
 
     switch (prefix.type_) {
@@ -371,7 +371,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         string esi_str = str.substr(pos2 + 1, pos3 - pos2 - 1);
         boost::system::error_code esi_err;
@@ -380,7 +380,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = esi_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         // Parse tag.
@@ -390,7 +390,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         break;
@@ -404,7 +404,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         string tag_str = str.substr(pos2 + 1, pos3 - pos2 - 1);
         bool ret = stringToInteger(tag_str, prefix.tag_);
@@ -412,7 +412,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         // Parse MAC.
@@ -424,7 +424,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = mac_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         // Parse IP - treat all 0s as unspecified.
@@ -435,7 +435,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = ip_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         if (prefix.ip_address_.is_v4() && !prefix.ip_address_.is_unspecified())
             prefix.family_ = Address::INET;
@@ -453,7 +453,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         string tag_str = str.substr(pos2 + 1, pos3 - pos2 - 1);
         bool ret = stringToInteger(tag_str, prefix.tag_);
@@ -461,7 +461,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         // Parse IP.
@@ -472,7 +472,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = ip_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         prefix.family_ =
             prefix.ip_address_.is_v4() ? Address::INET : Address::INET6;
@@ -488,7 +488,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = make_error_code(boost::system::errc::invalid_argument);
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         string esi_str = str.substr(pos2 + 1, pos3 - pos2 - 1);
         boost::system::error_code esi_err;
@@ -497,7 +497,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = esi_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
 
         // Parse IP.
@@ -508,7 +508,7 @@ EvpnPrefix EvpnPrefix::FromString(const string &str,
             if (errorp != NULL) {
                 *errorp = ip_err;
             }
-            return EvpnPrefix::null_prefix;
+            return EvpnPrefix::kNullPrefix;
         }
         prefix.family_ =
             prefix.ip_address_.is_v4() ? Address::INET : Address::INET6;

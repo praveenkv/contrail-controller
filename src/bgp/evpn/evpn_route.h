@@ -19,9 +19,9 @@ class BgpServer;
 
 class EvpnPrefix {
 public:
-    static const EvpnPrefix null_prefix;
-    static const uint32_t null_tag;
-    static const uint32_t max_tag;
+    static const EvpnPrefix kNullPrefix;
+    static const uint32_t kNullTag;
+    static const uint32_t kMaxTag;
 
     static const size_t kRdSize;
     static const size_t kEsiSize;

@@ -23,8 +23,8 @@ void BgpProtoPrefix::WriteLabel(size_t label_offset, uint32_t label) {
     assert((label_offset + kLabelSize) <= prefix.size());
     assert(label <= 0xFFFFF);
     uint32_t tmp = (label << 4 | 0x1);
-    for (size_t idx = 0; idx < label_size; ++idx) {
-        int offset = (label_size - (idx + 1)) * 8;
+    for (size_t idx = 0; idx < kLabelSize; ++idx) {
+        int offset = (kLabelSize - (idx + 1)) * 8;
         prefix[label_offset + idx] = ((tmp >> offset) & 0xff);
     }
 }

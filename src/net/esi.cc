@@ -124,19 +124,15 @@ string EthernetSegmentId::ToString() const {
 
     switch (Type()) {
     case AS_BASED: {
-        char temp[64];
         uint32_t asn = get_value(data_ + 1, 4);
         uint32_t value = get_value(data_ + 5, 4);
-        snprintf(temp, sizeof(temp), "%u:%u", asn, value);
-        return temp;
+        return integerToString(asn) + ":" + integerToString(value);
         break;
     }
     case IP_BASED: {
-        Ip4Address ip(get_value(data_ + 1, 4));
+        Ip4Address addr(get_value(data_ + 1, 4));
         uint32_t value = get_value(data_ + 5, 4);
-        char temp[64];
-        snprintf(temp, sizeof(temp), ":%u", value);
-        return ip.to_string() + temp;
+        return addr.to_string() + ":" + integerToString(value);
         break;
     }
     case MAC_BASED:
@@ -150,7 +146,6 @@ string EthernetSegmentId::ToString() const {
             data_[0], data_[1], data_[2], data_[3], data_[4],
             data_[5], data_[6], data_[7], data_[8], data_[9]);
         return temp;
-        break;
     }
     }
 

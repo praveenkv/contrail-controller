@@ -177,9 +177,9 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::min_auto_discovery_route_size * 8,
+        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_auto_discovery_route_size,
+        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -200,10 +200,10 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
 TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
-    size_t nlri_size = EvpnPrefix::min_auto_discovery_route_size;
+    size_t nlri_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::min_auto_discovery_route_size;
+         nlri_size < EvpnPrefix::kMinAutoDiscoveryRouteSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -440,9 +440,9 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size * 8,
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size,
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -478,9 +478,9 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::min_mac_advertisment_route_size + 4) * 8,
+        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 4) * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size + 4,
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 4,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -516,9 +516,9 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::min_mac_advertisment_route_size + 16) * 8,
+        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 16) * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_mac_advertisment_route_size + 16,
+        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 16,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -540,10 +540,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::min_mac_advertisment_route_size;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -561,10 +561,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error2) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
     proto_prefix.prefix.resize(nlri_size, 0);
-    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
-        EvpnPrefix::tag_size;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
 
     for (uint16_t mac_len = 0; mac_len <= 255; ++mac_len) {
         if (mac_len == 48)
@@ -584,11 +584,11 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error2) {
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
+    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
     proto_prefix.prefix.resize(nlri_size, 0);
-    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
-        EvpnPrefix::tag_size;
-    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
 
     proto_prefix.prefix[mac_len_offset] = 48;
     for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
@@ -609,12 +609,12 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
-        EvpnPrefix::tag_size;
-    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
-         nlri_size < EvpnPrefix::min_mac_advertisment_route_size + 4;
+    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -634,12 +634,12 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t mac_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size +
-        EvpnPrefix::tag_size;
-    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::mac_size;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_mac_advertisment_route_size;
-         nlri_size < EvpnPrefix::min_mac_advertisment_route_size + 16;
+    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + 16;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -796,9 +796,9 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix1) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::min_inclusive_multicast_route_size + 4) * 8,
+        EXPECT_EQ((EvpnPrefix::kMinInclusiveMulticastRouteSize + 4) * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_inclusive_multicast_route_size + 4,
+        EXPECT_EQ(EvpnPrefix::kMinInclusiveMulticastRouteSize + 4,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -829,9 +829,9 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix2) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::InclusiveMulticastRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::min_inclusive_multicast_route_size + 16) * 8,
+        EXPECT_EQ((EvpnPrefix::kMinInclusiveMulticastRouteSize + 16) * 8,
             proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::min_inclusive_multicast_route_size + 16,
+        EXPECT_EQ(EvpnPrefix::kMinInclusiveMulticastRouteSize + 16,
             proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
@@ -852,10 +852,10 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix2) {
 TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
-    size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+    size_t nlri_size = EvpnPrefix::kMinInclusiveMulticastRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size;
+         nlri_size < EvpnPrefix::kMinInclusiveMulticastRouteSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -873,9 +873,9 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error1) {
 TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error2) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
-    size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
+    size_t nlri_size = EvpnPrefix::kMinInclusiveMulticastRouteSize;
     proto_prefix.prefix.resize(nlri_size, 0);
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kTagSize;
 
     for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
         if (ip_len == 32 || ip_len == 128)
@@ -895,10 +895,10 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error2) {
 TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error3) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kTagSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
-         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size + 4;
+    for (size_t nlri_size = EvpnPrefix::kMinInclusiveMulticastRouteSize;
+         nlri_size < EvpnPrefix::kMinInclusiveMulticastRouteSize + 4;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -917,10 +917,10 @@ TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error3) {
 TEST_F(EvpnInclusiveMulticastPrefixTest, FromProtoPrefix_Error4) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::InclusiveMulticastRoute;
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::tag_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kTagSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_inclusive_multicast_route_size;
-         nlri_size < EvpnPrefix::min_inclusive_multicast_route_size + 16;
+    for (size_t nlri_size = EvpnPrefix::kMinInclusiveMulticastRouteSize;
+         nlri_size < EvpnPrefix::kMinInclusiveMulticastRouteSize + 16;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -1069,9 +1069,9 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix1) {
     BgpProtoPrefix proto_prefix;
     prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
     EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
-    EXPECT_EQ((EvpnPrefix::min_segment_route_size + 4) * 8,
+    EXPECT_EQ((EvpnPrefix::kMinSegmentRouteSize + 4) * 8,
         proto_prefix.prefixlen);
-    EXPECT_EQ(EvpnPrefix::min_segment_route_size + 4,
+    EXPECT_EQ(EvpnPrefix::kMinSegmentRouteSize + 4,
         proto_prefix.prefix.size());
 
     EvpnPrefix prefix2;
@@ -1098,9 +1098,9 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix2) {
     BgpProtoPrefix proto_prefix;
     prefix1.BuildProtoPrefix(&attr1, 0, &proto_prefix);
     EXPECT_EQ(EvpnPrefix::SegmentRoute, proto_prefix.type);
-    EXPECT_EQ((EvpnPrefix::min_segment_route_size + 16) * 8,
+    EXPECT_EQ((EvpnPrefix::kMinSegmentRouteSize + 16) * 8,
         proto_prefix.prefixlen);
-    EXPECT_EQ(EvpnPrefix::min_segment_route_size + 16,
+    EXPECT_EQ(EvpnPrefix::kMinSegmentRouteSize + 16,
         proto_prefix.prefix.size());
 
     EvpnPrefix prefix2;
@@ -1120,10 +1120,10 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix2) {
 TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::SegmentRoute;
-    size_t nlri_size = EvpnPrefix::min_segment_route_size;
+    size_t nlri_size = EvpnPrefix::kMinSegmentRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::min_segment_route_size;
+         nlri_size < EvpnPrefix::kMinSegmentRouteSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -1141,9 +1141,9 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error1) {
 TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error2) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::SegmentRoute;
-    size_t nlri_size = EvpnPrefix::min_segment_route_size;
+    size_t nlri_size = EvpnPrefix::kMinSegmentRouteSize;
     proto_prefix.prefix.resize(nlri_size, 0);
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize;
 
     for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
         if (ip_len == 32 || ip_len == 128)
@@ -1163,10 +1163,10 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error2) {
 TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error3) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::SegmentRoute;
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_segment_route_size;
-         nlri_size < EvpnPrefix::min_segment_route_size + 4;
+    for (size_t nlri_size = EvpnPrefix::kMinSegmentRouteSize;
+         nlri_size < EvpnPrefix::kMinSegmentRouteSize + 4;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -1185,10 +1185,10 @@ TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error3) {
 TEST_F(EvpnSegmentPrefixTest, FromProtoPrefix_Error4) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::SegmentRoute;
-    size_t ip_len_offset = EvpnPrefix::rd_size + EvpnPrefix::esi_size;
+    size_t ip_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize;
 
-    for (size_t nlri_size = EvpnPrefix::min_segment_route_size;
-         nlri_size < EvpnPrefix::min_segment_route_size + 16;
+    for (size_t nlri_size = EvpnPrefix::kMinSegmentRouteSize;
+         nlri_size < EvpnPrefix::kMinSegmentRouteSize + 16;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);

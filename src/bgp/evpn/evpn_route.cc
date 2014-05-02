@@ -14,20 +14,20 @@ const EvpnPrefix EvpnPrefix::null_prefix;
 const uint32_t EvpnPrefix::null_tag = 0;
 const uint32_t EvpnPrefix::max_tag = 0xFFFFFFFF;
 
-const size_t EvpnPrefix::rd_size = RouteDistinguisher::kSize;
-const size_t EvpnPrefix::esi_size = EthernetSegmentId::kSize;
-const size_t EvpnPrefix::tag_size = 4;
-const size_t EvpnPrefix::mac_size = MacAddress::kSize;
-const size_t EvpnPrefix::label_size = BgpProtoPrefix::kLabelSize;
+const size_t EvpnPrefix::kRdSize = RouteDistinguisher::kSize;
+const size_t EvpnPrefix::kEsiSize = EthernetSegmentId::kSize;
+const size_t EvpnPrefix::kTagSize = 4;
+const size_t EvpnPrefix::kMacSize = MacAddress::kSize;
+const size_t EvpnPrefix::kLabelSize = BgpProtoPrefix::kLabelSize;
 
-const size_t EvpnPrefix::min_auto_discovery_route_size =
-    rd_size + esi_size + tag_size + label_size;
-const size_t EvpnPrefix::min_mac_advertisment_route_size =
-    rd_size + esi_size + tag_size + 1 + mac_size + 1 + label_size;
-const size_t EvpnPrefix::min_inclusive_multicast_route_size =
-    rd_size + tag_size + 1;
-const size_t EvpnPrefix::min_segment_route_size =
-    rd_size + esi_size + 1;
+const size_t EvpnPrefix::kMinAutoDiscoveryRouteSize =
+    kRdSize + kEsiSize + kTagSize + kLabelSize;
+const size_t EvpnPrefix::kMinMacAdvertisementRouteSize =
+    kRdSize + kEsiSize + kTagSize + 1 + kMacSize + 1 + kLabelSize;
+const size_t EvpnPrefix::kMinInclusiveMulticastRouteSize =
+    kRdSize + kTagSize + 1;
+const size_t EvpnPrefix::kMinSegmentRouteSize =
+    kRdSize + kEsiSize + 1;
 
 EvpnPrefix::EvpnPrefix()
     : type_(Unspecified), tag_(EvpnPrefix::null_tag), family_(Address::UNSPEC) {
@@ -96,40 +96,40 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
 
     switch (prefix->type_) {
     case AutoDiscoveryRoute: {
-        if (nlri_size < min_auto_discovery_route_size)
+        if (nlri_size < kMinAutoDiscoveryRouteSize)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
-        size_t esi_offset = rd_offset + rd_size;
+        size_t esi_offset = rd_offset + kRdSize;
         prefix->esi_ = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
-        size_t tag_offset = esi_offset + esi_size;
-        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
-        size_t label_offset = tag_offset + tag_size;
+        size_t tag_offset = esi_offset + kEsiSize;
+        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], kTagSize);
+        size_t label_offset = tag_offset + kTagSize;
         *label = proto_prefix.ReadLabel(label_offset);
         break;
     }
     case MacAdvertisementRoute: {
-        if (nlri_size < min_mac_advertisment_route_size)
+        if (nlri_size < kMinMacAdvertisementRouteSize)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
-        size_t esi_offset = rd_offset + rd_size;
+        size_t esi_offset = rd_offset + kRdSize;
         EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
         *new_attr = server->attr_db()->ReplaceEsiAndLocate(attr, esi);
-        size_t tag_offset = esi_offset + esi_size;
-        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
-        size_t mac_len_offset = tag_offset + tag_size;
+        size_t tag_offset = esi_offset + kEsiSize;
+        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], kTagSize);
+        size_t mac_len_offset = tag_offset + kTagSize;
         size_t mac_len = proto_prefix.prefix[mac_len_offset];
         if (mac_len != 48)
             return -1;
         size_t mac_offset = mac_len_offset + 1;
         prefix->mac_addr_ = MacAddress(&proto_prefix.prefix[mac_offset]);
-        size_t ip_len_offset = mac_offset + mac_size;
+        size_t ip_len_offset = mac_offset + kMacSize;
         size_t ip_len = proto_prefix.prefix[ip_len_offset];
         if (ip_len != 0 && ip_len != 32 && ip_len != 128)
             return -1;
         size_t ip_size = ip_len / 8;
-        if (nlri_size < min_mac_advertisment_route_size + ip_size)
+        if (nlri_size < kMinMacAdvertisementRouteSize + ip_size)
             return -1;
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
@@ -138,36 +138,36 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         break;
     }
     case InclusiveMulticastRoute: {
-        if (nlri_size < min_inclusive_multicast_route_size)
+        if (nlri_size < kMinInclusiveMulticastRouteSize)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
-        size_t tag_offset = rd_offset + rd_size;
-        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
-        size_t ip_len_offset = tag_offset + tag_size;
+        size_t tag_offset = rd_offset + kRdSize;
+        prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], kTagSize);
+        size_t ip_len_offset = tag_offset + kTagSize;
         size_t ip_len = proto_prefix.prefix[ip_len_offset];
         if (ip_len != 32 && ip_len != 128)
             return -1;
         size_t ip_size = ip_len / 8;
-        if (nlri_size < min_inclusive_multicast_route_size + ip_size)
+        if (nlri_size < kMinInclusiveMulticastRouteSize + ip_size)
             return -1;
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
         break;
     }
     case SegmentRoute: {
-        if (nlri_size < min_segment_route_size)
+        if (nlri_size < kMinSegmentRouteSize)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
-        size_t esi_offset = rd_offset + rd_size;
+        size_t esi_offset = rd_offset + kRdSize;
         prefix->esi_ = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
-        size_t ip_len_offset = esi_offset + esi_size;
+        size_t ip_len_offset = esi_offset + kEsiSize;
         size_t ip_len = proto_prefix.prefix[ip_len_offset];
         if (ip_len != 32 && ip_len != 128)
             return -1;
         size_t ip_size = ip_len / 8;
-        if (nlri_size < min_segment_route_size + ip_size)
+        if (nlri_size < kMinSegmentRouteSize + ip_size)
             return -1;
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
@@ -195,44 +195,44 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
 
     switch (type_) {
     case AutoDiscoveryRoute: {
-        size_t nlri_size = min_auto_discovery_route_size;
+        size_t nlri_size = kMinAutoDiscoveryRouteSize;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 
         size_t rd_offset = 0;
-        copy(rd_.GetData(), rd_.GetData() + rd_size,
+        copy(rd_.GetData(), rd_.GetData() + kRdSize,
             proto_prefix->prefix.begin() + rd_offset);
-        size_t esi_offset = rd_offset + rd_size;
-        copy(esi_.GetData(), esi_.GetData() + esi_size,
+        size_t esi_offset = rd_offset + kRdSize;
+        copy(esi_.GetData(), esi_.GetData() + kEsiSize,
             proto_prefix->prefix.begin() + esi_offset);
-        size_t tag_offset = esi_offset + esi_size;
-        put_value(&proto_prefix->prefix[tag_offset], tag_size, tag_);
-        size_t label_offset = tag_offset + tag_size;
+        size_t tag_offset = esi_offset + kEsiSize;
+        put_value(&proto_prefix->prefix[tag_offset], kTagSize, tag_);
+        size_t label_offset = tag_offset + kTagSize;
         proto_prefix->WriteLabel(label_offset, label);
         break;
     }
     case MacAdvertisementRoute: {
         size_t ip_size = GetIpAddressSize();
-        size_t nlri_size = min_mac_advertisment_route_size + ip_size;
+        size_t nlri_size = kMinMacAdvertisementRouteSize + ip_size;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 
         size_t rd_offset = 0;
-        copy(rd_.GetData(), rd_.GetData() + rd_size,
+        copy(rd_.GetData(), rd_.GetData() + kRdSize,
             proto_prefix->prefix.begin() + rd_offset);
-        size_t esi_offset = rd_offset + rd_size;
+        size_t esi_offset = rd_offset + kRdSize;
         if (attr) {
-            copy(attr->esi().GetData(), attr->esi().GetData() + esi_size,
+            copy(attr->esi().GetData(), attr->esi().GetData() + kEsiSize,
                 proto_prefix->prefix.begin() + esi_offset);
         }
-        size_t tag_offset = esi_offset + esi_size;
-        put_value(&proto_prefix->prefix[tag_offset], tag_size, tag_);
-        size_t mac_len_offset = tag_offset + tag_size;
+        size_t tag_offset = esi_offset + kEsiSize;
+        put_value(&proto_prefix->prefix[tag_offset], kTagSize, tag_);
+        size_t mac_len_offset = tag_offset + kTagSize;
         proto_prefix->prefix[mac_len_offset] = 48;
         size_t mac_offset = mac_len_offset + 1;
-        copy(mac_addr_.GetData(), mac_addr_.GetData() + mac_size,
+        copy(mac_addr_.GetData(), mac_addr_.GetData() + kMacSize,
             proto_prefix->prefix.begin() + mac_offset);
-        size_t ip_len_offset = mac_offset + mac_size;
+        size_t ip_len_offset = mac_offset + kMacSize;
         proto_prefix->prefix[ip_len_offset] = ip_size * 8;
         size_t ip_offset = ip_len_offset + 1;
         WriteIpAddress(proto_prefix, ip_offset);
@@ -242,16 +242,16 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
     }
     case InclusiveMulticastRoute: {
         size_t ip_size = GetIpAddressSize();
-        size_t nlri_size = min_inclusive_multicast_route_size + ip_size;
+        size_t nlri_size = kMinInclusiveMulticastRouteSize + ip_size;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 
         size_t rd_offset = 0;
-        copy(rd_.GetData(), rd_.GetData() + rd_size,
+        copy(rd_.GetData(), rd_.GetData() + kRdSize,
             proto_prefix->prefix.begin() + rd_offset);
-        size_t tag_offset = rd_offset + rd_size;
-        put_value(&proto_prefix->prefix[tag_offset], tag_size, tag_);
-        size_t ip_len_offset = tag_offset + tag_size;
+        size_t tag_offset = rd_offset + kRdSize;
+        put_value(&proto_prefix->prefix[tag_offset], kTagSize, tag_);
+        size_t ip_len_offset = tag_offset + kTagSize;
         proto_prefix->prefix[ip_len_offset] = ip_size * 8;
         size_t ip_offset = ip_len_offset + 1;
         WriteIpAddress(proto_prefix, ip_offset);
@@ -259,17 +259,17 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
     }
     case SegmentRoute: {
         size_t ip_size = GetIpAddressSize();
-        size_t nlri_size = min_segment_route_size + ip_size;
+        size_t nlri_size = kMinSegmentRouteSize + ip_size;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 
         size_t rd_offset = 0;
-        copy(rd_.GetData(), rd_.GetData() + rd_size,
+        copy(rd_.GetData(), rd_.GetData() + kRdSize,
             proto_prefix->prefix.begin() + rd_offset);
-        size_t esi_offset = rd_offset + rd_size;
-        copy(esi_.GetData(), esi_.GetData() + esi_size,
+        size_t esi_offset = rd_offset + kRdSize;
+        copy(esi_.GetData(), esi_.GetData() + kEsiSize,
             proto_prefix->prefix.begin() + esi_offset);
-        size_t ip_len_offset = esi_offset + esi_size;
+        size_t ip_len_offset = esi_offset + kEsiSize;
         proto_prefix->prefix[ip_len_offset] = ip_size * 8;
         size_t ip_offset = ip_len_offset + 1;
         WriteIpAddress(proto_prefix, ip_offset);

@@ -23,15 +23,15 @@ public:
     static const uint32_t null_tag;
     static const uint32_t max_tag;
 
-    static const size_t rd_size;
-    static const size_t esi_size;
-    static const size_t tag_size;
-    static const size_t mac_size;
-    static const size_t label_size;
-    static const size_t min_auto_discovery_route_size;
-    static const size_t min_mac_advertisment_route_size;
-    static const size_t min_inclusive_multicast_route_size;
-    static const size_t min_segment_route_size;
+    static const size_t kRdSize;
+    static const size_t kEsiSize;
+    static const size_t kTagSize;
+    static const size_t kMacSize;
+    static const size_t kLabelSize;
+    static const size_t kMinAutoDiscoveryRouteSize;
+    static const size_t kMinMacAdvertisementRouteSize;
+    static const size_t kMinInclusiveMulticastRouteSize;
+    static const size_t kMinSegmentRouteSize;
 
     enum RouteType {
         Unspecified = 0,

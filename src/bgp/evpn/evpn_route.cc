@@ -92,7 +92,7 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
     *new_attr = attr;
     *label = 0;
     prefix->type_ = proto_prefix.type;
-    size_t nlri_size = proto_prefix.prefixlen / 8;
+    size_t nlri_size = proto_prefix.prefix.size();
 
     switch (prefix->type_) {
     case AutoDiscoveryRoute: {
@@ -106,8 +106,6 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], tag_size);
         size_t label_offset = tag_offset + tag_size;
         *label = prefix->ReadLabel(proto_prefix, label_offset);
-        if (*label > 0xFFFFF)
-            return -1;
         break;
     }
     case MacAdvertisementRoute: {
@@ -137,8 +135,6 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
         size_t label_offset = ip_offset + ip_size;
         *label = prefix->ReadLabel(proto_prefix, label_offset);
-        if (*label > 0xFFFFF)
-            return -1;
         break;
     }
     case InclusiveMulticastRoute: {

@@ -93,7 +93,7 @@ BgpRoute *EvpnTable::RouteReplicate(BgpServer *server,
 
     const RouteDistinguisher &rd = GenerateDistinguisher(src_table, src_path);
 
-    EvpnPrefix vpn_prefix(rd, EvpnPrefix::null_tag,
+    EvpnPrefix vpn_prefix(rd, EvpnPrefix::kNullTag,
         enet->GetPrefix().mac_addr(),
         enet->GetPrefix().ip_prefix().ip4_addr());
     EvpnRoute rt_key(vpn_prefix);

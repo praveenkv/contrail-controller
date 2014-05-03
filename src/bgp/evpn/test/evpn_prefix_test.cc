@@ -240,25 +240,6 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
     }
 }
 
-// Unreach for sizes >= EvpnPrefix::kMinAutoDiscoveryRouteSize.
-TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix3) {
-    BgpProtoPrefix proto_prefix;
-    proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
-
-    for (size_t nlri_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
-         nlri_size <= EvpnPrefix::kMinAutoDiscoveryRouteSize + EvpnPrefix::kLabelSize;
-         ++nlri_size) {
-        proto_prefix.prefix.clear();
-        proto_prefix.prefix.resize(nlri_size, 0x01);
-        EvpnPrefix prefix;
-        BgpAttrPtr attr_out;
-        uint32_t label;
-        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
-            proto_prefix, NULL, &prefix, &attr_out, &label);
-        EXPECT_EQ(0, result);
-    }
-}
-
 // Smaller than minimum size for reach.
 TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;

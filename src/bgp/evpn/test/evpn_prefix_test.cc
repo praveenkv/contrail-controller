@@ -163,7 +163,7 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, ParsePrefix_Error6) {
     EXPECT_NE(0, ec.value());
 }
 
-TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
     string temp("1-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
     BOOST_FOREACH(uint32_t tag, tag_list) {
@@ -193,6 +193,35 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix) {
         EXPECT_TRUE(attr_out2->esi().IsZero());
         EXPECT_EQ(attr_in2.get(), attr_out2.get());
         EXPECT_EQ(label1, label2);
+    }
+}
+
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
+    string temp("1-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-");
+    uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
+    BOOST_FOREACH(uint32_t tag, tag_list) {
+        string prefix_str = temp + integerToString(tag);
+        boost::system::error_code ec;
+        EvpnPrefix prefix1(EvpnPrefix::FromString(prefix_str, &ec));
+        EXPECT_EQ(0, ec.value());
+
+        BgpProtoPrefix proto_prefix;
+        prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
+        EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
+        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize * 8,
+            proto_prefix.prefixlen);
+        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize,
+            proto_prefix.prefix.size());
+
+        EvpnPrefix prefix2;
+        BgpAttrPtr attr_out2;
+        uint32_t label2;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
     }
 }
 

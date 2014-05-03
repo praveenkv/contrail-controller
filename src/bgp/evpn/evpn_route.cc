@@ -104,8 +104,10 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         prefix->esi_ = EthernetSegmentId(&proto_prefix.prefix[esi_offset]);
         size_t tag_offset = esi_offset + kEsiSize;
         prefix->tag_ = get_value(&proto_prefix.prefix[tag_offset], kTagSize);
-        size_t label_offset = tag_offset + kTagSize;
-        *label = proto_prefix.ReadLabel(label_offset);
+        if (attr) {
+            size_t label_offset = tag_offset + kTagSize;
+            *label = proto_prefix.ReadLabel(label_offset);
+        }
         break;
     }
     case MacAdvertisementRoute: {
@@ -135,8 +137,10 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
             return -1;
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
-        size_t label_offset = ip_offset + ip_size;
-        *label = proto_prefix.ReadLabel(label_offset);
+        if (attr) {
+            size_t label_offset = ip_offset + ip_size;
+            *label = proto_prefix.ReadLabel(label_offset);
+        }
         break;
     }
     case InclusiveMulticastRoute: {
@@ -192,6 +196,7 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
 //
 void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
     BgpProtoPrefix *proto_prefix) const {
+    assert(attr != NULL || label == 0);
     proto_prefix->type = type_;
     proto_prefix->prefix.clear();
 

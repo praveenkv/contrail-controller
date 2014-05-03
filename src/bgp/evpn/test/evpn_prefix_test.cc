@@ -976,7 +976,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error9) {
 }
 
 // Smaller than minimum unreach size for ipv6 address.
-TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error9) {
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error10) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
     size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +

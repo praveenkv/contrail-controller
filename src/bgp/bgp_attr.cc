@@ -498,6 +498,7 @@ int BgpAttr::CompareTo(const BgpAttr &rhs) const {
     KEY_COMPARE(aggregator_address_, rhs.aggregator_address_);
     KEY_COMPARE(edge_discovery_.get(), rhs.edge_discovery_.get());
     KEY_COMPARE(edge_forwarding_.get(), rhs.edge_forwarding_.get());
+    KEY_COMPARE(esi_, rhs.esi_);
     KEY_COMPARE(source_rd_, rhs.source_rd_);
     KEY_COMPARE(label_block_.get(), rhs.label_block_.get());
     KEY_COMPARE(olist_.get(), rhs.olist_.get());

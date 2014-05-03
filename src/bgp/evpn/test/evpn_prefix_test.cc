@@ -197,7 +197,7 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
     }
 }
 
-// Build and parse (with and without label) BgpProtoPrefix for unreach.
+// Build and parse (w/ and w/o label) BgpProtoPrefix for unreach.
 TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
     string temp("1-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
@@ -237,6 +237,25 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
         EXPECT_EQ(prefix1, prefix2);
         EXPECT_TRUE(attr_out2.get() == NULL);
         EXPECT_EQ(0, label2);
+    }
+}
+
+// Unreach for sizes >= EvpnPrefix::kMinAutoDiscoveryRouteSize.
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix3) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
+
+    for (size_t nlri_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
+         nlri_size <= EvpnPrefix::kMinAutoDiscoveryRouteSize + EvpnPrefix::kLabelSize;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0x01);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
+        EXPECT_EQ(0, result);
     }
 }
 
@@ -484,6 +503,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, ParsePrefix_Error8) {
     EXPECT_NE(0, ec.value());
 }
 
+// Build and parse BgpProtoPrefix for reach, w/o ip.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,0.0.0.0");
@@ -503,7 +523,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
@@ -522,6 +542,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
     }
 }
 
+// Build and parse BgpProtoPrefix for reach w/ ipv4.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,192.1.1.1");
@@ -541,7 +562,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 4;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
@@ -560,6 +581,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
     }
 }
 
+// Build and parse BgpProtoPrefix for reach w/ ipv6.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,2001:db8:0:9::1");
@@ -579,7 +601,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize + 16;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 16;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
@@ -598,6 +620,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
     }
 }
 
+// Build and parse (w/ and w/o label) BgpProtoPrefix for unreach, no ip.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,0.0.0.0");
@@ -612,7 +635,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
@@ -622,7 +645,20 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
         EvpnPrefix prefix2;
         BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        int result;
+
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+
+        proto_prefix.prefix.resize(EvpnPrefix::kMinMacAdvertisementRouteSize);
+        prefix2 = EvpnPrefix::kNullPrefix;
+        label2 = EvpnPrefix::kInvalidLabel;
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
             proto_prefix, NULL, &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
@@ -632,6 +668,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
     }
 }
 
+// Build and parse (w/ and w/o label) BgpProtoPrefix for unreach, w/ ipv4.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,192.1.1.1");
@@ -646,7 +683,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 4;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
@@ -656,7 +693,20 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
         EvpnPrefix prefix2;
         BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        int result;
+
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+
+        proto_prefix.prefix.resize(EvpnPrefix::kMinMacAdvertisementRouteSize + 4);
+        prefix2 = EvpnPrefix::kNullPrefix;
+        label2 = EvpnPrefix::kInvalidLabel;
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
             proto_prefix, NULL, &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
@@ -666,6 +716,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
     }
 }
 
+// Build and parse (w/ and w/o label) BgpProtoPrefix for unreach, w/ ipv6.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
     string temp1("2-10.1.1.1:65535-");
     string temp2("-11:12:13:14:15:16,2001:db8:0:9::1");
@@ -680,7 +731,7 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
         size_t expected_size =
-            EvpnPrefix::kMinMacAdvertisementRouteSize + 16;
+            EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 16;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
@@ -690,7 +741,20 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
         EvpnPrefix prefix2;
         BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        int result;
+
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(prefix2.esi().IsZero());
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+
+        proto_prefix.prefix.resize(EvpnPrefix::kMinMacAdvertisementRouteSize + 16);
+        prefix2 = EvpnPrefix::kNullPrefix;
+        label2 = EvpnPrefix::kInvalidLabel;
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
             proto_prefix, NULL, &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
@@ -700,14 +764,13 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
     }
 }
 
-// Smaller than minimum size.
+// Smaller than minimum size for reach.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -721,11 +784,31 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error1) {
     }
 }
 
-// Bad MAC Address length.
+// Smaller than minimum size for unreach.
 TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error2) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Bad MAC Address length in reach.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size =
+        EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
     proto_prefix.prefix.resize(nlri_size, 0);
     size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
         EvpnPrefix::kTagSize;
@@ -744,11 +827,35 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error2) {
     }
 }
 
-// Bad IP Address length.
-TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
+// Bad MAC Address length in unreach.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
-    size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
+    size_t nlri_size =
+        EvpnPrefix::kMinMacAdvertisementRouteSize;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+
+    for (uint16_t mac_len = 0; mac_len <= 255; ++mac_len) {
+        if (mac_len == 48)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[mac_len_offset] = mac_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Bad IP Address length in reach.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size =
+        EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
     proto_prefix.prefix.resize(nlri_size, 0);
     size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
         EvpnPrefix::kTagSize;
@@ -769,16 +876,41 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error3) {
     }
 }
 
-// Smaller than minimum size for ipv4 address.
-TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
+// Bad IP Address length in unreach.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error6) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t nlri_size =
+        EvpnPrefix::kMinMacAdvertisementRouteSize;
+    proto_prefix.prefix.resize(nlri_size, 0);
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
+
+    proto_prefix.prefix[mac_len_offset] = 48;
+    for (uint16_t ip_len = 0; ip_len <= 255; ++ip_len) {
+        if (ip_len == 0 || ip_len == 32 || ip_len == 128)
+            continue;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        proto_prefix.prefix[ip_len_offset] = ip_len;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum reach size for ipv4 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error7) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
     size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
         EvpnPrefix::kTagSize;
     size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
 
-    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
-         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 4;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -794,8 +926,57 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error4) {
     }
 }
 
-// Smaller than minimum size for ipv6 address.
-TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
+// Smaller than minimum reach size for ipv4 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error8) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
+
+    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[mac_len_offset] = 48;
+        proto_prefix.prefix[ip_len_offset] = 32;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum reach size for ipv6 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error9) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
+    size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
+        EvpnPrefix::kTagSize;
+    size_t ip_len_offset = mac_len_offset + 1 + EvpnPrefix::kMacSize;
+
+    for (size_t nlri_size = EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize;
+         nlri_size < EvpnPrefix::kMinMacAdvertisementRouteSize + EvpnPrefix::kLabelSize + 16;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        proto_prefix.prefix[mac_len_offset] = 48;
+        proto_prefix.prefix[ip_len_offset] = 128;
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum unreach size for ipv6 address.
+TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error9) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::MacAdvertisementRoute;
     size_t mac_len_offset = EvpnPrefix::kRdSize + EvpnPrefix::kEsiSize +
@@ -810,11 +991,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix_Error5) {
         proto_prefix.prefix[mac_len_offset] = 48;
         proto_prefix.prefix[ip_len_offset] = 128;
         EvpnPrefix prefix;
-        BgpAttrPtr attr_in(new BgpAttr(bs_->attr_db()));
         BgpAttrPtr attr_out;
         uint32_t label;
         int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
-            proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+            proto_prefix, NULL, &prefix, &attr_out, &label);
         EXPECT_NE(0, result);
     }
 }

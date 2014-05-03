@@ -24,7 +24,7 @@ const size_t EvpnPrefix::kLabelSize = BgpProtoPrefix::kLabelSize;
 const size_t EvpnPrefix::kMinAutoDiscoveryRouteSize =
     kRdSize + kEsiSize + kTagSize;
 const size_t EvpnPrefix::kMinMacAdvertisementRouteSize =
-    kRdSize + kEsiSize + kTagSize + 1 + kMacSize + 1 + kLabelSize;
+    kRdSize + kEsiSize + kTagSize + 1 + kMacSize + 1;
 const size_t EvpnPrefix::kMinInclusiveMulticastRouteSize =
     kRdSize + kTagSize + 1;
 const size_t EvpnPrefix::kMinSegmentRouteSize =
@@ -97,9 +97,9 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
 
     switch (prefix->type_) {
     case AutoDiscoveryRoute: {
-        size_t expected_size =
+        size_t expected_min_nlri_size =
             kMinAutoDiscoveryRouteSize + (attr ? kLabelSize : 0);
-        if (nlri_size < expected_size)
+        if (nlri_size < expected_min_nlri_size)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
@@ -114,7 +114,9 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         break;
     }
     case MacAdvertisementRoute: {
-        if (nlri_size < kMinMacAdvertisementRouteSize)
+        size_t expected_min_nlri_size =
+            kMinMacAdvertisementRouteSize + (attr ? kLabelSize : 0);
+        if (nlri_size < expected_min_nlri_size)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
@@ -136,7 +138,7 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
         if (ip_len != 0 && ip_len != 32 && ip_len != 128)
             return -1;
         size_t ip_size = ip_len / 8;
-        if (nlri_size < kMinMacAdvertisementRouteSize + ip_size)
+        if (nlri_size < expected_min_nlri_size + ip_size)
             return -1;
         size_t ip_offset = ip_len_offset + 1;
         prefix->ReadIpAddress(proto_prefix, ip_offset, ip_size);
@@ -223,7 +225,7 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
     }
     case MacAdvertisementRoute: {
         size_t ip_size = GetIpAddressSize();
-        size_t nlri_size = kMinMacAdvertisementRouteSize + ip_size;
+        size_t nlri_size = kMinMacAdvertisementRouteSize + kLabelSize + ip_size;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 

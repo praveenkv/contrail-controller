@@ -11,6 +11,7 @@ using namespace std;
 
 const EvpnPrefix EvpnPrefix::kNullPrefix;
 
+const uint32_t EvpnPrefix::kInvalidLabel = 0x100000;
 const uint32_t EvpnPrefix::kNullTag = 0;
 const uint32_t EvpnPrefix::kMaxTag = 0xFFFFFFFF;
 
@@ -21,7 +22,7 @@ const size_t EvpnPrefix::kMacSize = MacAddress::kSize;
 const size_t EvpnPrefix::kLabelSize = BgpProtoPrefix::kLabelSize;
 
 const size_t EvpnPrefix::kMinAutoDiscoveryRouteSize =
-    kRdSize + kEsiSize + kTagSize + kLabelSize;
+    kRdSize + kEsiSize + kTagSize;
 const size_t EvpnPrefix::kMinMacAdvertisementRouteSize =
     kRdSize + kEsiSize + kTagSize + 1 + kMacSize + 1 + kLabelSize;
 const size_t EvpnPrefix::kMinInclusiveMulticastRouteSize =
@@ -96,7 +97,9 @@ int EvpnPrefix::FromProtoPrefix(BgpServer *server,
 
     switch (prefix->type_) {
     case AutoDiscoveryRoute: {
-        if (nlri_size < kMinAutoDiscoveryRouteSize)
+        size_t expected_size =
+            kMinAutoDiscoveryRouteSize + (attr ? kLabelSize : 0);
+        if (nlri_size < expected_size)
             return -1;
         size_t rd_offset = 0;
         prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
@@ -202,7 +205,7 @@ void EvpnPrefix::BuildProtoPrefix(const BgpAttr *attr, uint32_t label,
 
     switch (type_) {
     case AutoDiscoveryRoute: {
-        size_t nlri_size = kMinAutoDiscoveryRouteSize;
+        size_t nlri_size = kMinAutoDiscoveryRouteSize + kLabelSize;
         proto_prefix->prefixlen = nlri_size * 8;
         proto_prefix->prefix.resize(nlri_size, 0);
 

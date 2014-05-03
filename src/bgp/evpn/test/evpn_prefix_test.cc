@@ -163,6 +163,7 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, ParsePrefix_Error6) {
     EXPECT_NE(0, ec.value());
 }
 
+// Build and parse BgpProtoPrefix for reach.
 TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
     string temp("1-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
@@ -177,7 +178,8 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
-        size_t expected_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
+        size_t expected_size =
+            EvpnPrefix::kMinAutoDiscoveryRouteSize + EvpnPrefix::kLabelSize;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
@@ -195,6 +197,7 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
     }
 }
 
+// Build and parse (with and without label) BgpProtoPrefix for unreach.
 TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
     string temp("1-10.1.1.1:65535-00:01:02:03:04:05:06:07:08:09-");
     uint32_t tag_list[] = { 0, 100, 128, 4094, 65536, 4294967295 };
@@ -207,14 +210,28 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
-        size_t expected_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
+        size_t expected_size =
+            EvpnPrefix::kMinAutoDiscoveryRouteSize + EvpnPrefix::kLabelSize;
         EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
         EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_out2;
         uint32_t label2;
-        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+        int result;
+
+        prefix2 = EvpnPrefix::kNullPrefix;
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
+        EXPECT_EQ(0, result);
+        EXPECT_EQ(prefix1, prefix2);
+        EXPECT_TRUE(attr_out2.get() == NULL);
+        EXPECT_EQ(0, label2);
+
+        proto_prefix.prefix.resize(EvpnPrefix::kMinAutoDiscoveryRouteSize);
+        prefix2 = EvpnPrefix::kNullPrefix;
+        label2 = EvpnPrefix::kInvalidLabel;
+        result = EvpnPrefix::FromProtoPrefix(bs_.get(),
             proto_prefix, NULL, &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
@@ -223,14 +240,13 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
     }
 }
 
-// Smaller than minimum size.
-TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error) {
+// Smaller than minimum size for reach.
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error1) {
     BgpProtoPrefix proto_prefix;
     proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
-    size_t nlri_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
 
     for (size_t nlri_size = 0;
-         nlri_size < EvpnPrefix::kMinAutoDiscoveryRouteSize;
+         nlri_size < EvpnPrefix::kMinAutoDiscoveryRouteSize + EvpnPrefix::kLabelSize;
          ++nlri_size) {
         proto_prefix.prefix.clear();
         proto_prefix.prefix.resize(nlri_size, 0);
@@ -240,6 +256,25 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error) {
         uint32_t label;
         int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
             proto_prefix, attr_in.get(), &prefix, &attr_out, &label);
+        EXPECT_NE(0, result);
+    }
+}
+
+// Smaller than minimum size for unreach.
+TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix_Error2) {
+    BgpProtoPrefix proto_prefix;
+    proto_prefix.type = EvpnPrefix::AutoDiscoveryRoute;
+
+    for (size_t nlri_size = 0;
+         nlri_size < EvpnPrefix::kMinAutoDiscoveryRouteSize;
+         ++nlri_size) {
+        proto_prefix.prefix.clear();
+        proto_prefix.prefix.resize(nlri_size, 0);
+        EvpnPrefix prefix;
+        BgpAttrPtr attr_out;
+        uint32_t label;
+        int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
+            proto_prefix, NULL, &prefix, &attr_out, &label);
         EXPECT_NE(0, result);
     }
 }

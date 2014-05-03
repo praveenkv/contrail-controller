@@ -20,6 +20,7 @@ class BgpServer;
 class EvpnPrefix {
 public:
     static const EvpnPrefix kNullPrefix;
+    static const uint32_t kInvalidLabel;
     static const uint32_t kNullTag;
     static const uint32_t kMaxTag;
 

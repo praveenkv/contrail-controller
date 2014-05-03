@@ -177,10 +177,9 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix1) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize,
-            proto_prefix.prefix.size());
+        size_t expected_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
@@ -208,10 +207,9 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::AutoDiscoveryRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinAutoDiscoveryRouteSize,
-            proto_prefix.prefix.size());
+        size_t expected_size = EvpnPrefix::kMinAutoDiscoveryRouteSize;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_out2;
@@ -469,10 +467,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix1) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
@@ -507,10 +505,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix2) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 4) * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 4,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
@@ -545,10 +543,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix3) {
         attr1.set_esi(esi1);
         prefix1.BuildProtoPrefix(&attr1, label1, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 16) * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 16,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize + 16;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
 
         EvpnPrefix prefix2;
         BgpAttrPtr attr_in2(new BgpAttr(bs_->attr_db()));
@@ -578,10 +576,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix4) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
         EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
         EXPECT_TRUE(esi.IsZero());
@@ -612,10 +610,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix5) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 4) * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 4,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize + 4;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
         EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
         EXPECT_TRUE(esi.IsZero());
@@ -646,10 +644,10 @@ TEST_F(EvpnMacAdvertisementPrefixTest, FromProtoPrefix6) {
         BgpProtoPrefix proto_prefix;
         prefix1.BuildProtoPrefix(NULL, 0, &proto_prefix);
         EXPECT_EQ(EvpnPrefix::MacAdvertisementRoute, proto_prefix.type);
-        EXPECT_EQ((EvpnPrefix::kMinMacAdvertisementRouteSize + 16) * 8,
-            proto_prefix.prefixlen);
-        EXPECT_EQ(EvpnPrefix::kMinMacAdvertisementRouteSize + 16,
-            proto_prefix.prefix.size());
+        size_t expected_size =
+            EvpnPrefix::kMinMacAdvertisementRouteSize + 16;
+        EXPECT_EQ(expected_size * 8, proto_prefix.prefixlen);
+        EXPECT_EQ(expected_size, proto_prefix.prefix.size());
         size_t esi_offset = EvpnPrefix::kRdSize;
         EthernetSegmentId esi(&proto_prefix.prefix[esi_offset]);
         EXPECT_TRUE(esi.IsZero());

@@ -217,7 +217,7 @@ TEST_F(EvpnAutoDiscoveryPrefixTest, FromProtoPrefix2) {
         BgpAttrPtr attr_out2;
         uint32_t label2;
         int result = EvpnPrefix::FromProtoPrefix(bs_.get(),
-            proto_prefix, attr_in2.get(), &prefix2, &attr_out2, &label2);
+            proto_prefix, NULL, &prefix2, &attr_out2, &label2);
         EXPECT_EQ(0, result);
         EXPECT_EQ(prefix1, prefix2);
         EXPECT_TRUE(attr_out2.get() == NULL);

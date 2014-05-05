@@ -988,7 +988,7 @@ void BgpPeer::ProcessUpdate(const BgpProto::Update *msg) {
                 BgpAttrPtr new_attr;
                 uint32_t label = 0;
                 int result = EvpnPrefix::FromProtoPrefix(server_, (**it),
-                    (oper == DBRequest::DB_ENTRY_ADD_CHANGE) ? path_attr : NULL,
+                    (oper == DBRequest::DB_ENTRY_ADD_CHANGE) ? attr.get() : NULL,
                     &prefix, &new_attr, &label);
                 if (result) {
                     BGP_LOG_PEER(Message, this, SandeshLevel::SYS_WARN,

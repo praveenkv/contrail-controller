@@ -13,8 +13,6 @@ import subprocess
 Import('AgentEnv')
 env = AgentEnv.Clone()
 
-#env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
-
 env.GenerateBuildInfoCode(
     target='buildinfo.cc',
     source = ['main.cc'],

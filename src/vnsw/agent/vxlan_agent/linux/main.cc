@@ -23,6 +23,9 @@
 #include <cfg/cfg_mirror.h>
 #include <cfg/discovery_agent.h>
 
+#include <cmn/agent_param.h>
+#include "linux_vxlan_agent_init.h"
+
 #include <oper/operdb_init.h>
 #include <oper/vrf.h>
 #include <oper/multicast.h>

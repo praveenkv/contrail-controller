@@ -292,8 +292,8 @@ for dir in subdirs:
 env.SConscript('contrail/SConscript', exports=['AgentEnv', 'BuildEnv'],
                duplicate=0)
 
-#env.SConscript('vxlan_agent/SConscript', exports=['AgentEnv', 'BuildEnv'],
-#               duplicate=0)
+env.SConscript('vxlan_agent/SConscript', exports=['AgentEnv', 'BuildEnv'],
+               duplicate=0)
 
 ##########################################################################
 # Utility functions

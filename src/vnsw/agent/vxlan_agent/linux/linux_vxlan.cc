@@ -74,6 +74,9 @@ KSyncLinuxBridgeEntry::KSyncLinuxBridgeEntry(KSyncLinuxBridgeObject *obj,
     std::stringstream s;
     s << "br-" << vxlan_id();
     name_ = s.str();
+
+    s << "vxlan-" << vxlan_id();
+    vxlan_if_name_ = s.str();
 }
 
 KSyncLinuxBridgeEntry::KSyncLinuxBridgeEntry
@@ -90,8 +93,13 @@ bool KSyncLinuxBridgeEntry::Add() {
     Execute(s.str());
 
     s.str("");
-    s << "ip link add " << name_ << " type vxlan id " << vxlan_id();
+    s << "ip link add " << vxlan_if_name_ << " type vxlan id " << vxlan_id();
     Execute(s.str());
+
+    s.str("");
+    s << "brctl addif " << name_ << " " << vxlan_if_name_;
+    Execute(s.str());
+
     return true;
 }
 
@@ -101,7 +109,11 @@ bool KSyncLinuxBridgeEntry::Change() {
 
 bool KSyncLinuxBridgeEntry::Delete() {
     std::stringstream s;
-    s << "ip link del " << name_ << " type vxlan id " << vxlan_id();
+    s << "brctl delif " << name_ << " " << vxlan_if_name_;
+    Execute(s.str());
+
+    s.str("");
+    s << "ip link del " << vxlan_if_name_ << " type vxlan id " << vxlan_id();
     Execute(s.str());
 
     s.str("");
@@ -150,14 +162,14 @@ bool KSyncLinuxPortEntry::Add() {
 
     std::stringstream s;
     if (old_bridge_) {
-        s << "ip link del " << old_bridge_->name() << " dev " << port_name();
+        s << "brctl delif " << old_bridge_->name() << " " << port_name();
         Execute(s.str());
     }
 
     if (br) {
         s.str("");
         old_bridge_ = br;
-        s << "ip link add " << br->name() << " dev " << port_name();
+        s << "brctl addif " << br->name() << " " << port_name();
         Execute(s.str());
     }
     return true;
@@ -172,7 +184,7 @@ bool KSyncLinuxPortEntry::Delete() {
         return true;
 
     std::stringstream s;
-    s << "ip link del " << old_bridge_->name() << " dev " << port_name();
+    s << "brctl delif " << old_bridge_->name() << " " << port_name();
     Execute(s.str());
     return true;
 }

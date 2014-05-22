@@ -13,12 +13,14 @@ public:
     virtual ~KSyncLinuxBridgeEntry() { }
 
     const std::string name() const { return name_; }
+    const std::string vxlan_if_name() const { return vxlan_if_name_; }
 
     bool Add();
     bool Change();
     bool Delete();
 private:
     std::string name_;
+    std::string vxlan_if_name_;
     DISALLOW_COPY_AND_ASSIGN(KSyncLinuxBridgeEntry);
 };
 

@@ -24,12 +24,14 @@
 #include <sandesh/sandesh.h>
 #include <sandesh/sandesh_trace.h>
 
+#include <ksync/ksync_index.h>
+#include <ksync/ksync_entry.h>
+#include <ksync/ksync_object.h>
+
 #include <cmn/agent_cmn.h>
 #include <cmn/agent_factory.h>
-#include <cmn/agent_stats.h>
 #include <cfg/cfg_init.h>
 #include <cfg/cfg_mirror.h>
-#include <cfg/discovery_agent.h>
 
 #include <oper/operdb_init.h>
 #include <oper/vrf.h>
@@ -37,16 +39,6 @@
 #include <oper/mirror_table.h>
 #include <controller/controller_init.h>
 #include <controller/controller_vrf_export.h>
-#include <pkt/pkt_init.h>
-#include <services/services_init.h>
-#include <ksync/ksync_init.h>
-#include <uve/agent_uve.h>
-#include <kstate/kstate.h>
-#include <pkt/proto.h>
-#include <pkt/proto_handler.h>
-#include <diag/diag.h>
-#include <vgw/cfg_vgw.h>
-#include <vgw/vgw.h>
 
 #include <cmn/agent_param.h>
 #include "linux_vxlan_agent_init.h"
@@ -86,7 +78,6 @@ void LinuxVxlanAgentInit::InitCollector() {
 // by init module
 void LinuxVxlanAgentInit::CreateModules() {
     agent_->set_cfg(new AgentConfig(agent_));
-    agent_->set_stats(new AgentStats(agent_));
     agent_->set_oper_db(new OperDB(agent_));
     agent_->set_controller(new VNController(agent_));
     ksync_vxlan_.reset(new KSyncLinuxVxlan(agent_));

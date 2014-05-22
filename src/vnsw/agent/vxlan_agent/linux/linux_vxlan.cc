@@ -17,6 +17,10 @@
 #include <db/db_graph.h>
 #include <base/logging.h>
 
+#include <ksync/ksync_index.h>
+#include <ksync/ksync_entry.h>
+#include <ksync/ksync_object.h>
+
 #include <vnc_cfg_types.h> 
 #include <bgp_schema_types.h>
 #include <pugixml/pugixml.hpp>
@@ -26,7 +30,6 @@
 
 #include <cmn/agent_cmn.h>
 #include <cmn/agent_factory.h>
-#include <cmn/agent_stats.h>
 #include <cfg/cfg_init.h>
 #include <cfg/cfg_mirror.h>
 #include <cfg/discovery_agent.h>
@@ -37,17 +40,6 @@
 #include <oper/mirror_table.h>
 #include <controller/controller_init.h>
 #include <controller/controller_vrf_export.h>
-#include <pkt/pkt_init.h>
-#include <services/services_init.h>
-#include <ksync/ksync_init.h>
-#include <uve/agent_uve.h>
-#include <kstate/kstate.h>
-#include <pkt/proto.h>
-#include <pkt/proto_handler.h>
-#include <diag/diag.h>
-#include <vgw/cfg_vgw.h>
-#include <vgw/vgw.h>
-
 #include <cmn/agent_param.h>
 
 #include <vxlan_agent/ksync_vxlan.h>

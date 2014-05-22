@@ -6,6 +6,7 @@
 #include <boost/program_options.hpp>
 #include <base/logging.h>
 #include <base/contrail_ports.h>
+#include <boost/functional/factory.hpp>
 
 #include <pugixml/pugixml.hpp>
 
@@ -22,25 +23,17 @@
 #include <cfg/cfg_mirror.h>
 #include <cfg/discovery_agent.h>
 
-#include <cmn/agent_param.h>
-#include "linux_vxlan_agent_init.h"
-
 #include <oper/operdb_init.h>
 #include <oper/vrf.h>
 #include <oper/multicast.h>
 #include <oper/mirror_table.h>
 #include <controller/controller_init.h>
 #include <controller/controller_vrf_export.h>
-#include <pkt/pkt_init.h>
-#include <services/services_init.h>
-#include <ksync/ksync_init.h>
 #include <openstack/instance_service_server.h>
-#include <uve/agent_uve.h>
-#include <kstate/kstate.h>
-#include <pkt/proto.h>
-#include <diag/diag.h>
-#include <boost/functional/factory.hpp>
 #include <cmn/agent_factory.h>
+
+#include <cmn/agent_param.h>
+#include "linux_vxlan_agent_init.h"
 
 namespace opt = boost::program_options;
 
@@ -54,11 +47,6 @@ void RouterIdDepInit(Agent *agent) {
 
 bool GetBuildInfo(std::string &build_info_str) {
     return MiscUtils::GetBuildInfo(MiscUtils::Agent, BuildInfo, build_info_str);
-}
-
-void FactoryInit() {
-    AgentObjectFactory::Register<AgentUve>(boost::factory<AgentUve *>());
-    AgentObjectFactory::Register<KSync>(boost::factory<KSync *>());
 }
 
 int main(int argc, char *argv[]) {
@@ -165,8 +153,6 @@ int main(int argc, char *argv[]) {
             exit(EINVAL);
         }
     }
-
-    FactoryInit();
 
     string build_info;
     GetBuildInfo(build_info);

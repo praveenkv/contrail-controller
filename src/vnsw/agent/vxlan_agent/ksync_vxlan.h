@@ -31,6 +31,8 @@ public:
     KSyncVxlanPortObject *port_obj() const;
     KSyncVxlanVrfObject *vrf_obj() const;
     Agent *agent() const { return agent_; }
+    static KSyncEntry *defer_entry();
+    static void set_defer_entry(KSyncEntry *entry);
 protected:
     void set_bridge_obj(KSyncVxlanBridgeObject *obj);
     void set_port_obj(KSyncVxlanPortObject *obj);
@@ -41,6 +43,7 @@ private:
     std::auto_ptr<KSyncVxlanBridgeObject> bridge_obj_;
     std::auto_ptr<KSyncVxlanPortObject> port_obj_;
     std::auto_ptr<KSyncVxlanVrfObject> vrf_obj_;
+    static KSyncEntry *defer_entry_;
     DISALLOW_COPY_AND_ASSIGN(KSyncVxlan);
 };
 

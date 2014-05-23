@@ -62,8 +62,8 @@ void KSyncLinuxVxlan::Init() {
 }
 
 static void Execute(const string &str) {
-    //system(str.c_str());
     cout << str << endl;
+    system(str.c_str());
 }
 
 /****************************************************************************
@@ -75,16 +75,21 @@ KSyncLinuxBridgeEntry::KSyncLinuxBridgeEntry(KSyncLinuxBridgeObject *obj,
     s << "br-" << vxlan_id();
     name_ = s.str();
 
-    s << "vxlan-" << vxlan_id();
-    vxlan_if_name_ = s.str();
+    std::stringstream s1;
+    s1 << "vxlan-" << vxlan_id();
+    vxlan_port_name_ = s1.str();
 }
 
-KSyncLinuxBridgeEntry::KSyncLinuxBridgeEntry
-(KSyncLinuxBridgeObject *obj, const KSyncLinuxBridgeEntry *entry) :
+KSyncLinuxBridgeEntry::KSyncLinuxBridgeEntry(KSyncLinuxBridgeObject *obj,
+                                         const KSyncLinuxBridgeEntry *entry) :
     KSyncVxlanBridgeEntry(obj, entry) { 
     std::stringstream s;
     s << "br-" << vxlan_id();
     name_ = s.str();
+
+    std::stringstream s1;
+    s1 << "vxlan-" << vxlan_id();
+    vxlan_port_name_ = s1.str();
 }
 
 bool KSyncLinuxBridgeEntry::Add() {
@@ -93,11 +98,20 @@ bool KSyncLinuxBridgeEntry::Add() {
     Execute(s.str());
 
     s.str("");
-    s << "ip link add " << vxlan_if_name_ << " type vxlan id " << vxlan_id();
+    s << "ip link add " << vxlan_port_name_ << " type vxlan id " << vxlan_id()
+        << " group 239.1.1.1 dstport 0";
     Execute(s.str());
 
     s.str("");
-    s << "brctl addif " << name_ << " " << vxlan_if_name_;
+    s << "brctl addif " << name_ << " " << vxlan_port_name_;
+    Execute(s.str());
+
+    s.str("");
+    s << "ifconfig " << name_ << " up";
+    Execute(s.str());
+
+    s.str("");
+    s << "ifconfig " << vxlan_port_name_ << " up";
     Execute(s.str());
 
     return true;
@@ -109,11 +123,11 @@ bool KSyncLinuxBridgeEntry::Change() {
 
 bool KSyncLinuxBridgeEntry::Delete() {
     std::stringstream s;
-    s << "brctl delif " << name_ << " " << vxlan_if_name_;
+    s << "brctl delif " << name_ << " " << vxlan_port_name_;
     Execute(s.str());
 
     s.str("");
-    s << "ip link del " << vxlan_if_name_ << " type vxlan id " << vxlan_id();
+    s << "ip link del " << vxlan_port_name_ << " type vxlan id " << vxlan_id();
     Execute(s.str());
 
     s.str("");
@@ -244,16 +258,24 @@ static void MacToStr(char *buff, const struct ether_addr &mac) {
 }
 
 bool KSyncLinuxFdbEntry::Add() {
-    const KSyncLinuxBridgeEntry *br =
-        dynamic_cast<const KSyncLinuxBridgeEntry *>(bridge());
-
     char buff[64];
     MacToStr(buff, mac());
 
-    std::stringstream s;
-    s << "bridge fdb add " << buff << " dst " << tunnel_dest() << " dev "
-        << (br ? br->name() : "<bridge-null>");
-    Execute(s.str());
+    if (port() != NULL) {
+        std::stringstream s;
+        s << "bridge fdb add " << buff << " dev " << port()->port_name()
+            << " master";
+        //Execute(s.str());
+    } else if (tunnel_dest().to_ulong() != 0) {
+        const KSyncLinuxBridgeEntry *br =
+            dynamic_cast<const KSyncLinuxBridgeEntry *>(bridge());
+
+        std::stringstream s;
+        s << "bridge fdb add " << buff << " dst " << tunnel_dest() << " dev "
+            << br->vxlan_port_name();
+        Execute(s.str());
+    }
+
     return true;
 }
 
@@ -262,16 +284,23 @@ bool KSyncLinuxFdbEntry::Change() {
 }
 
 bool KSyncLinuxFdbEntry::Delete() {
-    const KSyncLinuxBridgeEntry *br =
-        dynamic_cast<const KSyncLinuxBridgeEntry *>(bridge());
-
     char buff[64];
     MacToStr(buff, mac());
 
-    std::stringstream s;
-    s << "bridge fdb del " << buff << " dev "
-        << (br ? br->name() : "<bridge-null>");
-    Execute(s.str());
+    if (port() != NULL) {
+        std::stringstream s;
+        s << "bridge fdb del " << buff << " dev " << port()->port_name()
+            << " master";
+        //Execute(s.str());
+    } else if (tunnel_dest().to_ulong() != 0) {
+        const KSyncLinuxBridgeEntry *br =
+            dynamic_cast<const KSyncLinuxBridgeEntry *>(bridge());
+
+        std::stringstream s;
+        s << "bridge fdb del " << buff << " dev " << br->vxlan_port_name();
+        Execute(s.str());
+    }
+
     return true;
 }
 

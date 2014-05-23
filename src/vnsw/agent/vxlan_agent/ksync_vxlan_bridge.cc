@@ -74,6 +74,10 @@ void KSyncVxlanBridgeObject::RegisterDBClients() {
 }
 
 void KSyncVxlanBridgeObject::Init() {
+    VxLanId vxlan(0);
+    KSyncEntry *key = DBToKSyncEntry(&vxlan);
+    ksync_->set_defer_entry(GetReference(key));
+    return;
 }
 
 void KSyncVxlanBridgeObject::Shutdown() {

@@ -170,8 +170,17 @@ bool KSyncVxlanFdbEntry::Sync(DBEntry *e) {
 }
 
 KSyncEntry *KSyncVxlanFdbEntry::UnresolvedReference() {
-    if (bridge_ && bridge_->IsResolved() == false) {
+    if (bridge_ == NULL) {
+        return KSyncVxlan::defer_entry();
+    }
+
+    if (bridge_->IsResolved() == false) {
         return bridge_;
+    }
+
+
+    if (port_ == NULL && tunnel_dest_.to_ulong() == 0) {
+        return KSyncVxlan::defer_entry();
     }
 
     if (port_ && port_->IsResolved() == false) {

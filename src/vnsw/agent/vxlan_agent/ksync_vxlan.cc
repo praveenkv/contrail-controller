@@ -20,6 +20,8 @@
 #include "ksync_vxlan_port.h"
 #include "ksync_vxlan_route.h"
 
+KSyncEntry *KSyncVxlan::defer_entry_;
+
 KSyncVxlan::KSyncVxlan(Agent *agent) : 
     agent_(agent), bridge_obj_(NULL), port_obj_(NULL), vrf_obj_(NULL) {
 }
@@ -51,6 +53,14 @@ void KSyncVxlan::set_vrf_obj(KSyncVxlanVrfObject *obj) {
     vrf_obj_.reset(obj);
 }
 
+KSyncEntry *KSyncVxlan::defer_entry() {
+    return defer_entry_;
+}
+
+void KSyncVxlan::set_defer_entry(KSyncEntry *entry) {
+    defer_entry_ = entry;
+}
+
 void KSyncVxlan::RegisterDBClients(DB *db) {
     KSyncObjectManager::Init();
     bridge_obj_.get()->RegisterDBClients();
@@ -59,6 +69,9 @@ void KSyncVxlan::RegisterDBClients(DB *db) {
 }
 
 void KSyncVxlan::Init() {
+    bridge_obj_.get()->Init();
+    port_obj_.get()->Init();
+    vrf_obj_.get()->Init();
 }
 
 void KSyncVxlan::Shutdown() {

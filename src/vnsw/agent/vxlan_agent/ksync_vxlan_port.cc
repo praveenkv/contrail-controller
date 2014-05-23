@@ -93,7 +93,11 @@ KSyncEntry *KSyncVxlanPortEntry::UnresolvedReference() {
         return NULL;
     }
 
-    if (bridge_ && (bridge_->IsResolved() == false)) {
+    if (bridge_ == NULL) {
+        return KSyncVxlan::defer_entry();
+    } 
+    
+    if ((bridge_->IsResolved() == false)) {
         return bridge_;
     }
 

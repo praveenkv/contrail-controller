@@ -12,8 +12,6 @@ if sys.platform == 'darwin':
 Import('AgentEnv')
 env = AgentEnv.Clone()
 
-env.Depends('metadata_proxy.o', '#build/include/isc')
-
 SandeshGenFiles = env.SandeshGenCpp('services.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 sandesh_objs = AgentEnv.BuildExceptionCppObj(env, SandeshGenSrcs)
@@ -34,5 +32,7 @@ libservices = env.Library('agent_services',
                       'services_init.cc',
                       'services_sandesh.cc',
                       ])
+env.Requires('metadata_proxy.o', '#build/include/isc')
+
 
 env.SConscript('test/SConscript', exports='AgentEnv', duplicate = 0)

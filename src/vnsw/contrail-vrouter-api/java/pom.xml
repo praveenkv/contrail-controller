@@ -25,6 +25,23 @@
   </pluginRepositories>
   <dependencies>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>  
+      <version>1.9.5</version> 
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>14.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
       <version>0.8.0</version>
@@ -34,10 +51,30 @@
       <artifactId>commons-lang</artifactId>
       <version>2.6</version>
     </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>
   </dependencies>
   <build>
     <defaultGoal>package</defaultGoal>
+    <sourceDirectory>${basedir}/src</sourceDirectory>
     <directory>${basedir}/../../../../../build/debug/vnsw/contrail-vrouter-api/java/target</directory>
+    <testSourceDirectory>${basedir}/test</testSourceDirectory>
+    <testResources>
+      <testResource>
+        <directory>${basedir}/test/resources</directory>
+      </testResource>
+    </testResources>
+    <resources>
+      <resource>
+        <directory>${basedir}/test/resources</directory>
+        <includes>
+           <include>default_config</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.thrift.tools</groupId>
@@ -55,13 +92,6 @@
               <goal>compile</goal>
             </goals>
           </execution>
-          <execution>
-            <id>thrift-test-sources</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -70,12 +100,6 @@
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
-          <excludes>
-            <exclude>com/vmware/vim/rest/sample/*.java</exclude>
-            <exclude>com/vmware/vim25/mo/samples/*.java</exclude>
-            <exclude>com/vmware/vim25/mo/samples/cluster/*.java</exclude>
-            <exclude>com/vmware/vim25/mo/samples/ext/*.java</exclude>
-          </excludes>
         </configuration>
       </plugin>
       <plugin>
@@ -120,6 +144,5 @@
       </plugins>
     </pluginManagement>
   </build>
-
 
 </project>

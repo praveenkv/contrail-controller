@@ -151,7 +151,7 @@ AGENT_MULTIPATH_LIBS = [
 # even though there may not be any calls requiring its presence. We need this 
 # for kstate library so that the HTML file for kstate  is listed in agent 
 # introspect page
-AGENT_MULTIPATH_LIBS += ['kstate']
+#AGENT_MULTIPATH_LIBS += ['kstate']
 
 # Set LIBS environment to ensure libraries are built
 env.Prepend(LIBS = AGENT_MULTIPATH_LIBS)
@@ -175,6 +175,7 @@ AgentEnv.AppendUnique(CONTRAIL_LIBS = [
     'pkt',
     'agentuve',
     'vnswksync',
+    'ksyncnl',
     'kstate',
     'vrutil',
 ])

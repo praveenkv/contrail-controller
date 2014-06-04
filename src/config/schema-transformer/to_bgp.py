@@ -950,10 +950,10 @@ class VirtualNetworkST(DictST):
                             if (service_list and dvn in [self.name, 'any']):
                                     service_ri = self.get_service_name(sc_name,
                                         service_list[-1])
-                                    raction.assign_routing_instance = \
+                                    action.assign_routing_instance = \
                                         self.name +':' + service_ri
                             else:
-                                raction.assign_routing_instance = None
+                                action.assign_routing_instance = None
 
 
                         match = MatchConditionType(arule_proto,
@@ -2222,7 +2222,7 @@ class VirtualMachineInterfaceST(DictST):
         except NoIdError:
             _sandesh._logger.debug("NoIdError while reading interface %s",
                                    self.name)
-            return
+            return network_set
         vm_id = get_vm_id_from_interface(vmi_obj)
         if vm_id is None:
             return network_set
@@ -2369,8 +2369,10 @@ class VirtualMachineInterfaceST(DictST):
             # end for prule
             vmi_obj = _vnc_lib.virtual_machine_interface_read(
                 fq_name_str=self.name)
-            vmi_obj.set_vrf_assign_table(vrf_table)
-            _vnc_lib.virtual_machine_interface_update(vmi_obj)
+            if (jsonpickle.encode(vrf_table) !=
+                jsonpickle.encode(vmi_obj.get_vrf_assign_table())):
+                    vmi_obj.set_vrf_assign_table(vrf_table)
+                    _vnc_lib.virtual_machine_interface_update(vmi_obj)
     # end recreate_vrf_assign_table
 # end VirtualMachineInterfaceST
 

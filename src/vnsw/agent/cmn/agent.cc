@@ -10,9 +10,8 @@
 #include <io/event_manager.h>
 #include <ifmap/ifmap_link.h>
 
-#include <vnc_cfg_types.h>
 #include <cmn/agent_cmn.h>
-#include <cmn/agent_stats.h>
+#include <vnc_cfg_types.h>
 
 #include <cmn/agent_param.h>
 #include <cfg/cfg_init.h>
@@ -28,9 +27,9 @@
 #include <services/services_init.h>
 #include <pkt/pkt_init.h>
 #include <pkt/flow_table.h>
-#include <pkt/pkt_types.h>
 #include <pkt/proto.h>
 #include <pkt/proto_handler.h>
+#include <pkt/agent_stats.h>
 #include <uve/flow_stats_collector.h>
 #include <uve/agent_uve.h>
 #include <vgw/cfg_vgw.h>
@@ -181,11 +180,13 @@ void Agent::CopyConfig(AgentParam *params) {
     }
 
     if (params_->dns_server_1().to_ulong()) {
-        xs_dns_addr_[dns_count++] = params_->dns_server_1().to_string();
+        dns_port_[dns_count] = params_->dns_port_1();
+        dns_addr_[dns_count++] = params_->dns_server_1().to_string();
     }
 
     if (params_->dns_server_2().to_ulong()) {
-        xs_dns_addr_[dns_count++] = params_->dns_server_2().to_string();
+        dns_port_[dns_count] = params_->dns_port_2();
+        dns_addr_[dns_count++] = params_->dns_server_2().to_string();
     }
 
     if (params_->discovery_server().to_ulong()) {
@@ -295,26 +296,6 @@ void Agent::InitXenLinkLocalIntf() {
                           params_->xen_ll_gw(), link_local_vrf_name_);
 }
 
-void Agent::CreateDBTables() {
-    if (cfg_.get()) {
-        cfg_.get()->CreateDBTables(db_);
-    }
-
-    if (oper_db_.get()) {
-        oper_db_.get()->CreateDBTables(db_);
-    }
-}
-
-void Agent::CreateDBClients() {
-    if (cfg_.get()) {
-        cfg_.get()->RegisterDBClients(db_);
-    }
-
-    if (oper_db_.get()) {
-        oper_db_.get()->CreateDBClients();
-    }
-}
-
 void Agent::InitPeers() {
     // Create peer entries
     local_peer_.reset(new Peer(Peer::LOCAL_PEER, LOCAL_PEER_NAME));
@@ -322,16 +303,6 @@ void Agent::InitPeers() {
     linklocal_peer_.reset(new Peer(Peer::LINKLOCAL_PEER, LINKLOCAL_PEER_NAME));
     ecmp_peer_.reset(new Peer(Peer::ECMP_PEER, ECMP_PEER_NAME));
     vgw_peer_.reset(new Peer(Peer::VGW_PEER, VGW_PEER_NAME));
-}
-
-void Agent::InitModules() {
-    if (cfg_.get()) {
-        cfg_.get()->Init();
-    }
-
-    if (oper_db_.get()) {
-        oper_db_.get()->Init();
-    }
 }
 
 Agent::Agent() :
@@ -347,7 +318,7 @@ Agent::Agent() :
     intf_mirror_cfg_table_(NULL), intf_cfg_table_(NULL), 
     domain_config_table_(NULL), router_id_(0), prefix_len_(0), 
     gateway_id_(0), xs_cfg_addr_(""), xs_idx_(0), xs_addr_(), xs_port_(),
-    xs_stime_(), xs_dns_idx_(0), xs_dns_addr_(), xs_dns_port_(),
+    xs_stime_(), xs_dns_idx_(0), dns_addr_(), dns_port_(),
     dss_addr_(""), dss_port_(0), dss_xs_instances_(0), label_range_(),
     ip_fabric_intf_name_(""), vhost_interface_name_(""),
     pkt_interface_name_("pkt0"), cfg_listener_(NULL), arp_proto_(NULL),
@@ -392,11 +363,11 @@ void Agent::set_cfg(AgentConfig *cfg) {
 }
 
 DiagTable *Agent::diag_table() const {
-    return diag_table_.get();
+    return diag_table_;
 }
 
 void Agent::set_diag_table(DiagTable *table) {
-    diag_table_.reset(table);
+    diag_table_ = table;
 }
 
 AgentStats *Agent::stats() const {
@@ -424,19 +395,19 @@ void Agent::set_uve(AgentUve *uve) {
 }
 
 PktModule *Agent::pkt() const {
-    return pkt_.get();
+    return pkt_;
 }
 
 void Agent::set_pkt(PktModule *pkt) {
-    pkt_.reset(pkt);
+    pkt_ = pkt;
 }
 
 ServicesModule *Agent::services() const {
-    return services_.get();
+    return services_;
 }
 
 void Agent::set_services(ServicesModule *services) {
-    services_.reset(services);
+    services_ = services;
 }
 
 VNController *Agent::controller() const {

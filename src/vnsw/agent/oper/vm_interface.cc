@@ -32,7 +32,6 @@
 #include "sandesh/sandesh_trace.h"
 #include "sandesh/common/vns_types.h"
 #include "sandesh/common/vns_constants.h"
-#include <services/dns_proto.h>
 #include <filter/acl.h>
 
 using namespace std;
@@ -370,6 +369,7 @@ bool InterfaceTable::IFNodeToReq(IFMapNode *node, DBRequest &req) {
 
     //Fill config data items
     data->cfg_name_= node->name();
+    data->admin_state_ = id_perms.enable;
 
     BuildVrfAssignRule(cfg, data);
     SgUuidList sg_list(0);
@@ -748,6 +748,11 @@ bool VmInterface::CopyConfig(VmInterfaceConfigData *data, bool *sg_changed) {
         ret = true;
     }
 
+    if (admin_state_ != data->admin_state_) {
+        admin_state_ = data->admin_state_;
+        ret = true;
+    }
+
     // Audit operational and config floating-ip list
     FloatingIpSet &old_fip_list = floating_ip_list_.list_;
     FloatingIpSet &new_fip_list = data->floating_ip_list_.list_;
@@ -994,6 +999,10 @@ void VmInterface::GetOsParams(Agent *agent) {
 // - MAC address set for the interface
 bool VmInterface::IsActive() {
     if (IsDeleted()) {
+        return false;
+    }
+
+    if (!admin_state_) {
         return false;
     }
 
@@ -1648,11 +1657,8 @@ void VmInterface::FloatingIp::Activate(VmInterface *interface,
     }
 
     interface->AddRoute(vrf_.get()->GetName(), floating_ip_, 32, true);
-    Agent *agent = static_cast<InterfaceTable *>
-        (interface->get_table())->agent();
-    DnsProto *dns = agent->GetDnsProto();
-    if (dns) {
-        dns->UpdateDnsEntry(interface, vn_.get(), floating_ip_, false);
+    if (table->update_floatingip_cb().empty() == false) {
+        table->update_floatingip_cb()(interface, vn_.get(), floating_ip_, false);
     }
 
     installed_ = true;
@@ -1663,11 +1669,10 @@ void VmInterface::FloatingIp::DeActivate(VmInterface *interface) const {
         return;
 
     interface->DeleteRoute(vrf_.get()->GetName(), floating_ip_, 32);
-    Agent *agent = static_cast<InterfaceTable *>
-        (interface->get_table())->agent();
-    DnsProto *dns = agent->GetDnsProto();
-    if (dns) {
-        dns->UpdateDnsEntry(interface, vn_.get(), floating_ip_, true);
+    InterfaceTable *table =
+        static_cast<InterfaceTable *>(interface->get_table());
+    if (table->update_floatingip_cb().empty() == false) {
+        table->update_floatingip_cb()(interface, vn_.get(), floating_ip_, true);
     }
     installed_ = false;
 }

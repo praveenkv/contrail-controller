@@ -1236,7 +1236,7 @@ TEST_F(FlowTest, NonNatAddOldNat_3) {
             TestFlowPkt(vm1_ip, vm5_ip, 1, 0, 0, "vrf5", 
                     flow0->id()),
             {
-                new VerifyVn(unknown_vn_, unknown_vn_)
+                new VerifyVn("vn5", unknown_vn_)
             }
         }
     };
@@ -1344,7 +1344,7 @@ TEST_F(FlowTest, NatAddOldNonNat_1) {
              TestFlowPkt(vm1_ip, vm5_ip, 1, 0, 0, "vrf5", 
                     flow0->id(), 1),
             {
-                new VerifyVn(unknown_vn_, unknown_vn_) 
+                new VerifyVn("vn5", unknown_vn_) 
             }
         }
     };
@@ -1382,7 +1382,7 @@ TEST_F(FlowTest, NatAddOldNonNat_2) {
              TestFlowPkt(vm1_ip, vm5_ip, 1, 0, 0, "vrf5", 
                     flow0->id(), 1),
             {
-                new VerifyVn(unknown_vn_, unknown_vn_) 
+                new VerifyVn("vn5", unknown_vn_) 
             }
         }
     };
@@ -2267,6 +2267,21 @@ TEST_F(FlowTest, Flow_introspect_delete_all) {
     client->WaitForIdle();
 }
 
+TEST_F(FlowTest, Flow_Source_Vn_1) {
+    TestFlow flow[] = {
+        {
+            TestFlowPkt(vm1_ip, "17.1.1.1", 1, 0, 0, "vrf5",
+                        flow0->id(), 1),
+            {
+                new VerifyVn("vn5", unknown_vn_),
+            }
+        }
+    };
+
+    CreateFlow(flow, 1);
+    EXPECT_EQ(2U, agent()->pkt()->flow_table()->Size());
+}
+
 int main(int argc, char *argv[]) {
     GETUSERARGS();
 
@@ -2286,5 +2301,6 @@ int main(int argc, char *argv[]) {
     usleep(1000);
     Agent::GetInstance()->GetEventManager()->Shutdown();
     AsioStop();
+    TaskScheduler::GetInstance()->Terminate();
     return ret;
 }

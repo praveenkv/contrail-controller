@@ -84,11 +84,13 @@ void LinuxVxlanAgentInit::CreateModules() {
 }
 
 void LinuxVxlanAgentInit::CreateDBTables() {
-    agent_->CreateDBTables();
+    agent_->cfg()->CreateDBTables(agent_->GetDB());
+    agent_->oper_db()->CreateDBTables(agent_->GetDB());
 }
 
-void LinuxVxlanAgentInit::CreateDBClients() {
-    agent_->CreateDBClients();
+void LinuxVxlanAgentInit::RegisterDBClients() {
+    agent_->cfg()->RegisterDBClients(agent_->GetDB());
+    agent_->oper_db()->RegisterDBClients();
     ksync_vxlan_->RegisterDBClients(agent_->GetDB());
 }
 
@@ -97,7 +99,8 @@ void LinuxVxlanAgentInit::InitPeers() {
 }
 
 void LinuxVxlanAgentInit::InitModules() {
-    agent_->InitModules();
+    agent_->cfg()->Init();
+    agent_->oper_db()->Init();
     ksync_vxlan_->Init();
 }
 
@@ -149,7 +152,7 @@ bool LinuxVxlanAgentInit::Run() {
     InitPeers();
     CreateModules();
     CreateDBTables();
-    CreateDBClients();
+    RegisterDBClients();
     InitModules();
     CreateVrf();
     CreateNextHops();

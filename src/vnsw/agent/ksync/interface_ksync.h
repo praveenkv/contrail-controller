@@ -49,6 +49,7 @@ public:
         }
     }   
 
+    const uint8_t *smac() const {return smac_.ether_addr_octet;}
     uint32_t interface_id() const {return interface_id_;}
     const string &interface_name() const {return interface_name_;}
     bool has_service_vlan() const {return has_service_vlan_;}
@@ -73,6 +74,7 @@ private:
     uint32_t fd_;       // FD opened for this
     bool has_service_vlan_;
     struct ether_addr mac_;
+    struct ether_addr smac_;
     uint32_t ip_;
     bool policy_enabled_;
     string analyzer_name_;

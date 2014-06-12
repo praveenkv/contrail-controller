@@ -95,7 +95,6 @@ env.Prepend(LIBS = [
     'xmpp_multicast',
     'xmpp_enet',
     'xmpp_unicast',
-    'isc',
     'xml2',
     'ds',
     'xml',
@@ -172,6 +171,7 @@ AgentEnv.AppendUnique(CONTRAIL_LIBS = [
     'ksyncnl',
     'kstate',
     'vrutil',
+    'isc',
 ])
 
 # Common libraries for agent test code

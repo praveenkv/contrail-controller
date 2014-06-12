@@ -81,6 +81,7 @@ void LinuxVxlanAgentInit::CreateModules() {
     agent_->set_oper_db(new OperDB(agent_));
     agent_->set_controller(new VNController(agent_));
     ksync_vxlan_.reset(new KSyncLinuxVxlan(agent_));
+    agent_->set_controller(new VNController(agent_));
 }
 
 void LinuxVxlanAgentInit::CreateDBTables() {

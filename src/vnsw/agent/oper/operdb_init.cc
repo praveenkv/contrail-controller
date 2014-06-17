@@ -24,6 +24,7 @@
 #include <oper/multicast.h>
 #include <oper/global_vrouter.h>
 #include <oper/agent_route_encap.h>
+#include <filter/acl.h>
 #include <base/task_trigger.h>
 
 OperDB *OperDB::singleton_ = NULL;

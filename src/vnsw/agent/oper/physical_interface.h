@@ -11,16 +11,10 @@
 /////////////////////////////////////////////////////////////////////////////
 class PhysicalInterface : public Interface {
 public:
-    PhysicalInterface(const std::string &name, VrfEntry *vrf) :
-        Interface(Interface::PHYSICAL, nil_uuid(), name, vrf) {
-    }
-    virtual ~PhysicalInterface() { }
+    PhysicalInterface(const std::string &name, VrfEntry *vrf);
+    virtual ~PhysicalInterface();
 
-    bool CmpInterface(const DBEntry &rhs) const {
-        const PhysicalInterface &intf = 
-            static_cast<const PhysicalInterface &>(rhs);
-        return name_ < intf.name_;
-    }
+    bool CmpInterface(const DBEntry &rhs) const;
 
     std::string ToString() const { return "ETH <" + name() + ">"; }
     KeyPtr GetDBRequestKey() const;
@@ -37,36 +31,17 @@ private:
 };
 
 struct PhysicalInterfaceKey : public InterfaceKey {
-    PhysicalInterfaceKey(const std::string &name) :
-        InterfaceKey(AgentKey::ADD_DEL_CHANGE, Interface::PHYSICAL, nil_uuid(),
-                     name, false) {
-    }
-    virtual ~PhysicalInterfaceKey() {}
+    PhysicalInterfaceKey(const std::string &name);
+    virtual ~PhysicalInterfaceKey();
 
-    Interface *AllocEntry(const InterfaceTable *table) const {
-        return new PhysicalInterface(name_, NULL);
-    }
+    Interface *AllocEntry(const InterfaceTable *table) const;
     Interface *AllocEntry(const InterfaceTable *table,
-                          const InterfaceData *data) const {
-        VrfKey key(data->vrf_name_);
-        VrfEntry *vrf = static_cast<VrfEntry *>
-            (table->agent()->GetVrfTable()->FindActiveEntry(&key));
-        if (vrf == NULL) {
-            return NULL;
-        }
-
-        return new PhysicalInterface(name_, vrf);
-    }
-
-    InterfaceKey *Clone() const {
-        return new PhysicalInterfaceKey(*this);
-    }
+                          const InterfaceData *data) const;
+    InterfaceKey *Clone() const;
 };
 
 struct PhysicalInterfaceData : public InterfaceData {
-    PhysicalInterfaceData(const std::string &vrf_name) : InterfaceData() {
-        EthInit(vrf_name);
-    }
+    PhysicalInterfaceData(const std::string &vrf_name);
 };
 
 #endif // vnsw_agent_physical_interface_hpp

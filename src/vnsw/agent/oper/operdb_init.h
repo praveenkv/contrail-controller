@@ -10,6 +10,9 @@
 #include <tbb/compat/condition_variable>
 #endif
 
+#include <cmn/agent_cmn.h>
+#include <cmn/agent.h>
+
 class DBEntryBase;
 class GlobalVrouter;
 

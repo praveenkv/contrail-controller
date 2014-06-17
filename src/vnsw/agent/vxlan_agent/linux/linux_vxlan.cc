@@ -1,21 +1,7 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
-
-#include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#include <sys/stat.h>
-
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-
-#include <db/db.h>
-#include <db/db_graph.h>
-#include <base/logging.h>
+#include <cmn/agent_cmn.h>
 
 #include <ksync/ksync_index.h>
 #include <ksync/ksync_entry.h>
@@ -23,24 +9,19 @@
 
 #include <vnc_cfg_types.h> 
 #include <bgp_schema_types.h>
-#include <pugixml/pugixml.hpp>
-#include <sandesh/sandesh_types.h>
-#include <sandesh/sandesh.h>
-#include <sandesh/sandesh_trace.h>
+#include <agent_types.h>
 
-#include <cmn/agent_cmn.h>
-#include <cmn/agent_factory.h>
-#include <cfg/cfg_init.h>
-#include <cfg/cfg_mirror.h>
-#include <cfg/discovery_agent.h>
-
-#include <oper/operdb_init.h>
+#include <oper/peer.h>
 #include <oper/vrf.h>
+#include <oper/interface_common.h>
+#include <oper/nexthop.h>
 #include <oper/multicast.h>
+#include <oper/vn.h>
 #include <oper/mirror_table.h>
-#include <controller/controller_init.h>
-#include <controller/controller_vrf_export.h>
-#include <cmn/agent_param.h>
+#include <oper/vxlan.h>
+#include <oper/mpls.h>
+#include <oper/route_common.h>
+#include <oper/layer2_route.h>
 
 #include <vxlan_agent/ksync_vxlan.h>
 #include <vxlan_agent/ksync_vxlan_bridge.h>

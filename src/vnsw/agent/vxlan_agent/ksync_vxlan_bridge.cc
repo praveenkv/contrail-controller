@@ -1,29 +1,32 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <cmn/agent_cmn.h>
 
-#include <stdio.h>
-#include <string.h>
-
-#include <base/logging.h>
-#include <db/db_entry.h>
-#include <db/db_table.h>
-#include <db/db_table_partition.h>
-#include <sandesh/sandesh_types.h>
-#include <sandesh/sandesh.h>
 #include <ksync/ksync_index.h>
 #include <ksync/ksync_entry.h>
 #include <ksync/ksync_object.h>
-#include <ksync/ksync_sock.h>
 
-#include <cmn/agent_cmn.h>
-#include <oper/route_common.h>
-#include <oper/mirror_table.h>
+#include <vnc_cfg_types.h> 
+#include <bgp_schema_types.h>
+#include <agent_types.h>
+
+#include <oper/peer.h>
+#include <oper/vrf.h>
 #include <oper/interface_common.h>
+#include <oper/nexthop.h>
+#include <oper/multicast.h>
+#include <oper/vn.h>
+#include <oper/mirror_table.h>
 #include <oper/vxlan.h>
+#include <oper/mpls.h>
+#include <oper/route_common.h>
+#include <oper/layer2_route.h>
 
 #include "ksync_vxlan.h"
 #include "ksync_vxlan_bridge.h"
+#include "ksync_vxlan_port.h"
+#include "ksync_vxlan_route.h"
 
 KSyncVxlanBridgeEntry::KSyncVxlanBridgeEntry(KSyncVxlanBridgeObject *obj,
                                             const KSyncVxlanBridgeEntry *entry):

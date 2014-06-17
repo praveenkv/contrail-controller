@@ -31,7 +31,6 @@ def AddTopDir(list):
 env.Prepend(CPPPATH = AddTopDir([
     '',
     'base/sandesh',
-    'discovery/client',
     'dns',
     'http/client',
     'ifmap',

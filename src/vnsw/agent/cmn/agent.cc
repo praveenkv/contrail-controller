@@ -12,6 +12,7 @@
 
 #include <cmn/agent_cmn.h>
 #include <vnc_cfg_types.h>
+#include <agent_types.h>
 
 #include <cmn/agent_param.h>
 #include <cfg/cfg_init.h>
@@ -23,22 +24,11 @@
 #include <oper/multicast.h>
 #include <oper/nexthop.h>
 #include <oper/mirror_table.h>
+#include <oper/peer.h>
 
-#include <services/services_init.h>
-#include <pkt/pkt_init.h>
-#include <pkt/flow_table.h>
-#include <pkt/proto.h>
-#include <pkt/proto_handler.h>
-#include <pkt/agent_stats.h>
-#include <uve/flow_stats_collector.h>
-#include <uve/agent_uve.h>
-#include <vgw/cfg_vgw.h>
-#include <vgw/vgw.h>
+#include <filter/acl.h>
+
 #include <cmn/agent_factory.h>
-#include <controller/controller_init.h>
-
-#include <diag/diag.h>
-#include <ksync/ksync_init.h>
 
 const std::string Agent::null_str_ = "";
 const std::string Agent::fabric_vn_name_ = 
@@ -219,11 +209,11 @@ void Agent::CopyConfig(AgentParam *params) {
 }
 
 DiscoveryAgentClient *Agent::discovery_client() const {
-    return cfg_.get()->discovery_client();
+    return cfg_->discovery_client();
 }
 
 CfgListener *Agent::cfg_listener() const { 
-    return cfg_.get()->cfg_listener();
+    return cfg_->cfg_listener();
 }
 
 void Agent::set_cn_mcast_builder(AgentXmppChannel *peer) {
@@ -343,7 +333,7 @@ Agent::Agent() :
 }
 
 Agent::~Agent() {
-    uve_.reset(NULL);
+    uve_ = NULL;
 
     delete event_mgr_;
     event_mgr_ = NULL;
@@ -355,11 +345,11 @@ Agent::~Agent() {
 }
 
 AgentConfig *Agent::cfg() const {
-    return cfg_.get();
+    return cfg_;
 }
 
 void Agent::set_cfg(AgentConfig *cfg) {
-    cfg_.reset(cfg);
+    cfg_ = cfg;
 }
 
 DiagTable *Agent::diag_table() const {
@@ -371,27 +361,27 @@ void Agent::set_diag_table(DiagTable *table) {
 }
 
 AgentStats *Agent::stats() const {
-    return stats_.get();
+    return stats_;
 }
 
 void Agent::set_stats(AgentStats *stats) {
-    stats_.reset(stats);
+    stats_ = stats;
 }
 
 KSync *Agent::ksync() const {
-    return ksync_.get();
+    return ksync_;
 }
 
 void Agent::set_ksync(KSync *ksync) {
-    return ksync_.reset(ksync);
+    ksync_ = ksync;
 }
 
 AgentUve *Agent::uve() const {
-    return uve_.get();
+    return uve_;
 }
 
 void Agent::set_uve(AgentUve *uve) {
-    uve_.reset(uve);
+    uve_ = uve;
 }
 
 PktModule *Agent::pkt() const {
@@ -411,25 +401,25 @@ void Agent::set_services(ServicesModule *services) {
 }
 
 VNController *Agent::controller() const {
-    return controller_.get();
+    return controller_;
 }
 
 void Agent::set_controller(VNController *val) {
-    controller_.reset(val);
+    controller_ = val;
 }
 
 VirtualGateway *Agent::vgw() const {
-    return vgw_.get();
+    return vgw_;
 }
 
 void Agent::set_vgw(VirtualGateway *vgw) {
-    vgw_.reset(vgw);
+    vgw_ = vgw;
 }
 
 OperDB *Agent::oper_db() const {
-    return oper_db_.get();
+    return oper_db_;
 }
 
 void Agent::set_oper_db(OperDB *oper_db) {
-    oper_db_.reset(oper_db);
+    oper_db_ = oper_db;
 }

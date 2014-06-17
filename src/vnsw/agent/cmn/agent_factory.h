@@ -6,10 +6,12 @@
 #define vnsw_agent_factory_hpp
 
 #include <boost/function.hpp>
-#include "base/factory.h"
+#include <base/factory.h>
 #include <cmn/agent_cmn.h>
 
+class Agent;
 class AgentUve;
+class KSync;
 
 class AgentObjectFactory : public Factory<AgentObjectFactory> {
     FACTORY_TYPE_N1(AgentObjectFactory, KSync, Agent *);

@@ -158,6 +158,18 @@ void MirrorTable::MirrorSockInit(void) {
                                          placeholders::bytes_transferred));
 }
 
+VrfEntry *MirrorTable::FindVrfEntry(const string &vrf_name) const {
+    return Agent::GetInstance()->GetVrfTable()->FindVrfFromName(vrf_name);
+}
+
+uint32_t MirrorEntry::vrf_id() const {
+    return vrf_ ? vrf_->vrf_id() : uint32_t(-1);
+}
+
+const VrfEntry *MirrorEntry::GetVrf() const {
+    return vrf_ ? vrf_.get() : NULL;
+}
+
 void MirrorEntry::set_mirror_entrySandeshData(MirrorEntrySandeshData &data) const {
     data.set_analyzer_name(GetAnalyzerName());
     data.set_sip(GetSip()->to_string());

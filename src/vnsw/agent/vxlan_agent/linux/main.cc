@@ -1,44 +1,16 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
-#include <boost/uuid/string_generator.hpp>
-#include <boost/program_options.hpp>
-#include <base/logging.h>
-#include <base/contrail_ports.h>
-#include <boost/functional/factory.hpp>
-
-#include <pugixml/pugixml.hpp>
-
-#include <base/task.h>
-#include <io/event_manager.h>
-#include <sandesh/common/vns_types.h>
-#include <sandesh/common/vns_constants.h>
 #include <base/misc_utils.h>
-
 #include <cmn/buildinfo.h>
 #include <cmn/agent_cmn.h>
-
-#include <cfg/cfg_init.h>
-#include <cfg/cfg_mirror.h>
-#include <cfg/discovery_agent.h>
-
 #include <cmn/agent_param.h>
-#include "linux_vxlan_agent_init.h"
-
-#include <oper/operdb_init.h>
-#include <oper/vrf.h>
-#include <oper/multicast.h>
-#include <oper/mirror_table.h>
-#include <controller/controller_init.h>
-#include <controller/controller_vrf_export.h>
 #include <openstack/instance_service_server.h>
-#include <cmn/agent_factory.h>
-
-#include <cmn/agent_param.h>
+#include <controller/controller_init.h>
 #include "linux_vxlan_agent_init.h"
 
 namespace opt = boost::program_options;
+using namespace std;
 
 void RouterIdDepInit(Agent *agent) {
     InstanceInfoServiceServerInit(agent);

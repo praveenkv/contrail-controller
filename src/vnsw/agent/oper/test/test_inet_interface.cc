@@ -81,9 +81,9 @@ public:
         WAIT_FOR(100, 1000, (agent_->vn_table()->Size() == 0U));
     }
 
-    int intf_count_;
-    int nh_count_;
-    int vrf_count_;
+    uint32_t intf_count_;
+    uint32_t nh_count_;
+    uint32_t vrf_count_;
     Agent *agent_;
     InterfaceTable *interface_table_;
     NextHopTable *nh_table_;
@@ -302,10 +302,8 @@ static void InetTestCleanup(Agent *agent, const Ip4Address &addr,
 static void RestoreInetConfig(Agent *agent) {
     InetUnicastAgentRouteTable *table = agent->fabric_inet4_unicast_table();
     AgentParam *param = client->param();
-    table->AddGatewayRouteReq(agent->local_peer(), agent->fabric_vrf_name(),
-                           Ip4Address(0), 0, param->vhost_gw(),
-                           agent->fabric_vrf_name(),
-                           MplsTable::kInvalidLabel, SecurityGroupList());
+    table->AddGatewayRouteReq(agent->fabric_vrf_name(), Ip4Address(0), 0,
+                              param->vhost_gw(), agent->fabric_vrf_name());
     client->WaitForIdle();
 }
 
@@ -330,9 +328,6 @@ static bool RouteValidate(Agent *agent, const Ip4Address &ip, uint8_t plen,
 }
 
 TEST_F(InetInterfaceTest, physical_eth_encap_1) {
-    const NextHop *nh = NULL;
-    const InetUnicastRouteEntry *rt = NULL;
-    AgentParam *param = client->param();
     DelInetConfig(agent_);
 
     Ip4Address ip = Ip4Address::from_string("10.10.10.10");
@@ -366,9 +361,6 @@ TEST_F(InetInterfaceTest, physical_eth_encap_1) {
 }
 
 TEST_F(InetInterfaceTest, physical_eth_raw_ip_1) {
-    const NextHop *nh = NULL;
-    const InetUnicastRouteEntry *rt = NULL;
-    AgentParam *param = client->param();
     DelInetConfig(agent_);
 
     Ip4Address ip = Ip4Address::from_string("10.10.10.10");
@@ -404,9 +396,6 @@ TEST_F(InetInterfaceTest, physical_eth_raw_ip_1) {
 }
 
 TEST_F(InetInterfaceTest, physical_eth_no_arp_1) {
-    const NextHop *nh = NULL;
-    const InetUnicastRouteEntry *rt = NULL;
-    AgentParam *param = client->param();
     DelInetConfig(agent_);
 
     Ip4Address ip = Ip4Address::from_string("10.10.10.10");

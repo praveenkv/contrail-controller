@@ -496,9 +496,8 @@ void PhysicalInterface::PostAdd() {
     close(fd);
 }
 
-bool PhysicalInterface::Delete(const DBRequest *req) {
+void PhysicalInterface::Delete() {
     InterfaceNH::DeletePhysicalInterfaceNh(name_);
-    return true;
 }
 
 InterfaceKey *PhysicalInterfaceKey::Clone() const {

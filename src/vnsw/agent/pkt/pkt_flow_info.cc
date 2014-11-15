@@ -508,6 +508,9 @@ void PktFlowInfo::LinkLocalServiceFromVm(const PktInfo *pkt, PktControlInfo *in,
         // the packet not coming to vrouter for reverse NAT.
         // Destination would be local host (FindLinkLocalService returns this)
         nat_ip_saddr = vm_port->mdata_ip_addr();
+        // Services such as metadata will run on vhost_services_ip. Set nat
+        // address to vhost_services_ip
+        nat_server = Agent::GetInstance()->vhost_services_ip();
         nat_sport = pkt->sport;
     } else {
         nat_ip_saddr = Agent::GetInstance()->router_id();
@@ -549,8 +552,8 @@ void PktFlowInfo::LinkLocalServiceFromHost(const PktInfo *pkt, PktControlInfo *i
         return;
     }
 
-    if ((pkt->ip_daddr.to_v4().to_ulong() != vm_port->mdata_ip_addr().to_ulong()) ||
-        (pkt->ip_saddr.to_v4().to_ulong() != Agent::GetInstance()->router_id().to_ulong())) {
+    // Check if packet is destined to metadata of interface
+    if (pkt->ip_daddr.to_v4() != vm_port->mdata_ip_addr()) {
         // Force implicit deny
         in->rt_ = NULL;
         out->rt_ = NULL;

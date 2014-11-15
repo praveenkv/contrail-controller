@@ -254,6 +254,11 @@ public:
     void AddSubnetRoute(const string &vm_vrf, const IpAddress &addr,
                         uint8_t plen, const string &vn_name,
                         uint32_t vxlan_id);
+    void AddInterfaceRouteReq(Agent *agent, const Peer *peer,
+                              const string &vrf_name,
+                              const Ip4Address &ip, uint8_t plen,
+                              const Interface *interface,
+                              const std::string &vn_name);
 
 private:
     Agent::RouteTableType type_;

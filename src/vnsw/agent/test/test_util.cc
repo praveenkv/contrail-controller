@@ -419,9 +419,15 @@ bool VrfFind(const char *name) {
     return (vrf != NULL);
 }
 
-VrfEntry *VrfGet(const char *name) {
+VrfEntry *VrfGet(const char *name, bool ret_del) {
+    Agent *agent = Agent::GetInstance();
     VrfKey key(name);
-    return static_cast<VrfEntry *>(Agent::GetInstance()->vrf_table()->FindActiveEntry(&key));
+    VrfEntry *vrf =
+        static_cast<VrfEntry *>(agent->vrf_table()->Find(&key, ret_del));
+    if (vrf && (ret_del == false && vrf->IsDeleted()))
+        vrf = NULL;
+
+    return vrf;
 }
 
 bool VnFind(int id) {
@@ -1385,8 +1391,7 @@ void AddInterfaceRouteTableV6(const char *name, int id, TestIp6Prefix *rt,
     }
 
     char buff[10240];
-    sprintf(buff, "<interface-route-table-family>v6</interface-route-table-family>\n"
-                  "<interface-route-table-routes>\n"
+    sprintf(buff, "<interface-route-table-routes>\n"
                   "%s"
                   "</interface-route-table-routes>\n", o_str.str().c_str());
     AddNode("interface-route-table", name, id, buff);

@@ -41,10 +41,10 @@ class DiscoveryCassendraClient():
                 [disco_cf_info])
 
         pool = pycassa.ConnectionPool(self._keyspace_name,
-                                      server_list, max_overflow=10,
+                                      server_list, max_overflow=-1,
                                       use_threadlocal=True, prefill=True,
-                                      pool_size=10, pool_timeout=20,
-                                      max_retries=-1, timeout=0.5)
+                                      pool_size=100, pool_timeout=20,
+                                      max_retries=5, timeout=0.5)
         rd_consistency = pycassa.cassandra.ttypes.ConsistencyLevel.QUORUM
         wr_consistency = pycassa.cassandra.ttypes.ConsistencyLevel.QUORUM
         self._disco_cf = pycassa.ColumnFamily(pool, self._disco_cf_name,
@@ -88,6 +88,7 @@ class DiscoveryCassendraClient():
                 (cf_name, comparator_type, validator_type) = cf_info
                 sys_mgr.create_column_family(keyspace_name, cf_name, 
                         comparator_type = comparator_type, default_validation_class = validator_type)
+                sys_mgr.alter_column_family(keyspace_name, cf_name, gc_grace_seconds=0)
             except pycassa.cassandra.ttypes.InvalidRequestException as e:
                 # TODO verify only EEXISTS
                 print "Warning! " + str(e)
@@ -274,14 +275,17 @@ class DiscoveryCassendraClient():
         col_name = ('client', client_id, )
         try:
             subs = self._disco_cf.get(service_type, column_start = col_name,
-                column_finish = col_name)
-            # col_name = client, cliend_id, service_id
-            for col_name, col_val in subs.items():
+                column_finish = col_name, include_timestamp = True)
+            # sort columns by timestamp (subs is array of (col_name, (value, timestamp)))
+            subs = sorted(subs.items(), key=lambda entry: entry[1][1])
+            # col_name = (client, cliend_id, service_id)
+            # col_val  = (real-value, timestamp)
+            for col_name, col_val in subs:
                 foo, client_id, service_id = col_name
                 if service_id == disc_consts.CLIENT_TAG:
-                    data = json.loads(col_val)
+                    data = json.loads(col_val[0])
                     continue
-                entry = json.loads(col_val)
+                entry = json.loads(col_val[0])
                 r.append((col_name[2], entry['blob']))
             return (data, r)
         except pycassa.NotFoundException:
@@ -313,7 +317,7 @@ class DiscoveryCassendraClient():
     def delete_subscription(self, service_type, client_id, service_id):
         self._disco_cf.remove(service_type, 
             columns = [('client', client_id, service_id)])
-        self._disco_cfg.remove(service_type,
+        self._disco_cf.remove(service_type,
             columns = [('subscriber', service_id, client_id)])
     # end
 

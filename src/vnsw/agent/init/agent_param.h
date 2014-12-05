@@ -75,6 +75,7 @@ public:
     const int xen_ll_plen() const { return xen_ll_.plen_; }
     const Ip4Address &xen_ll_gw() const { return xen_ll_.gw_; }
 
+    const std::string &agent_name() const { return agent_name_; }
     const std::string &eth_port() const { return eth_port_; }
     const bool &eth_port_no_arp() const { return eth_port_no_arp_; }
     const std::string &eth_port_encap_type() const { return eth_port_encap_type_; }
@@ -96,6 +97,7 @@ public:
     bool headless_mode() const {return headless_mode_;}
     bool simulate_evpn_tor() const {return simulate_evpn_tor_;}
     std::string si_netns_command() const {return si_netns_command_;}
+    std::string si_docker_command() const {return si_docker_command_;}
     const int si_netns_workers() const {return si_netns_workers_;}
     const int si_netns_timeout() const {return si_netns_timeout_;}
     std::string si_haproxy_ssl_cert_path() const {
@@ -199,6 +201,12 @@ protected:
      uint16_t *port1, Ip4Address *server2, uint16_t *port2,
      const std::string &key);
 
+    Ip4Address xmpp_server_1_;
+    Ip4Address xmpp_server_2_;
+    Ip4Address dns_server_1_;
+    Ip4Address dns_server_2_;
+    Ip4Address dss_server_;
+    std::vector<std::string> collector_server_list_;
 private:
     void ComputeFlowLimits();
     void ParseCollector();
@@ -242,17 +250,13 @@ private:
     bool enable_service_options_;
 
     PortInfo vhost_;
+    std::string agent_name_;
     std::string eth_port_;
     bool eth_port_no_arp_;
     std::string eth_port_encap_type_;
     uint16_t xmpp_instance_count_;
-    Ip4Address xmpp_server_1_;
-    Ip4Address xmpp_server_2_;
-    Ip4Address dns_server_1_;
-    Ip4Address dns_server_2_;
     uint16_t dns_port_1_;
     uint16_t dns_port_2_;
-    Ip4Address dss_server_;
     Ip4Address mgmt_ip_;
     Mode mode_;
     PortInfo xen_ll_;
@@ -276,7 +280,6 @@ private:
     std::string log_category_;
     bool use_syslog_;
     std::string syslog_facility_;
-    std::vector<std::string> collector_server_list_;
     uint16_t http_server_port_;
     std::string host_name_;
     int agent_stats_interval_;
@@ -293,6 +296,7 @@ private:
     //simulated compute node behaves as bare metal.
     bool simulate_evpn_tor_;
     std::string si_netns_command_;
+    std::string si_docker_command_;
     int si_netns_workers_;
     int si_netns_timeout_;
     std::string si_haproxy_ssl_cert_path_;
